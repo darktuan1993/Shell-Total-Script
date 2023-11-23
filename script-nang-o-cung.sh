@@ -1,37 +1,53 @@
-########### Variable List ###########
-arrayMenu=("T?o ph�n disk m?i v� mount" "N�ng c?p dung l??ng" "Tho�t")
+﻿########### VARIABLE ###########
+arrayMenu=("Tạo phân disk mới và mount" "Nâng cấp dung lượng" "Thoát")
 mapfile -t vg_names < <(vgdisplay | awk '/VG Name/ {print $3}')
 capacityNumber=""
 
-# Danh s�ch menu
+function echo_space(){
+    echo " "
+}
+function echo_dongke(){
+    echo "----------------------------------------"
+}
+function exit_va_clear(){
+    exit
+    sleep 1
+    clear
+}
+########### END VARIABLE ###########
+
+
+# Danh sách menu
 function list_menu() {
     for ((i = 0; i < ${#arrayMenu[@]}; i++)); do
         echo "                                 $((i + 1)). ${arrayMenu[$i]}                          "
     done
 }
-# L?y th�ng tin disk
+# Lấy thông tin disk
 function lay_thong_tin_disk() {
     clear
     echo " "
-    echo "============================ Check th�ng tin ph�n v�ng df -HT ==================================="
+    echo "============================ Check thông tin phân vùng df -HT ==================================="
     df -hT
     echo " "
-    echo "============================ Check th�ng tin ??a lsblk ============================"
+    echo "============================ Check thông tin đĩa lsblk ============================"
     lsblk
 }
 
-# T?o Ph�n v�ng
+# Tạo Phân vùng trong fdisk
 function create_partition_disk() {
     nameDisk=$1
     capacityDisk=$2
     partitionNumber=$3
-
-    echo "T�n disk: $nameDisk"
-    echo "Dung l??ng: $capacityDisk"
+    
+    echo "Tên disk: $nameDisk"
+    echo "Dung lượng: $capacityDisk"
     echo "Partition : $partitionNumber"
-
+    # Nếu nhập số của phân vùng dạng sdb1,sdb2
     if [ -n "$3" ]; then
-        echo "ok"
+        echo_dongke
+        echo "ĐANG TRONG QUÁ TRÌNH TẠO Ổ CỨNG"
+        echo_dongke
         fdisk "/dev/$1" <<EOF
         n
         p
@@ -41,11 +57,14 @@ function create_partition_disk() {
         t
 
         8e
-        w   
+        w
 EOF
-        echo "T?O PARTITION TH�NH C�NG"
+        echo "TẠO PARTITION $nameDisk$partitionNumber THÀNH CÔNG"
     else
-        echo "ko ok l?m"
+        # NHẤN ENTER LUÔN
+        echo_dongke
+        echo "ĐANG TRONG QUÁ TRÌNH TẠO Ổ CỨNG"
+        echo_dongke
         fdisk "/dev/$1" <<EOF
         n
         p
@@ -55,19 +74,20 @@ EOF
         t
 
         8e
-        w   
+        w
 EOF
-
-        echo "T?O PARTITION TH�NH C�NG"
+        echo_dongke
+        echo "TẠO PARTITION THÀNH CÔNG"
+        echo_dongke
     fi
-
+    
 }
 
-# T?o volume group VG
+# Tạo volume group VG
 function create_volume_group() {
-    read -p "Nh?p t�n volume group mu?n t?o : " nameOfVolumeGroup
+    read -p "Nhập tên volume group muốn tạo : " nameOfVolumeGroup
     # Check volume group
-    # echo " Danh s�ch volume group:  ${vg_names[@]}  "
+    # echo " Danh sách volume group:  ${vg_names[@]}  "
     for vg_name in "${vg_names[@]}"; do
         if [ "$vg_name" == "$nameOfVolumeGroup" ]; then
             found=true
@@ -75,65 +95,75 @@ function create_volume_group() {
         fi
     done
     if [ "$found" == true ]; then
-        echo "T�n $nameOfVolumeGroup ?� ???c s? d?ng r?i !"
+        echo "Tên $nameOfVolumeGroup đã được sử dụng rồi !"
     else
-        echo "T�n $nameOfVolumeGroup c� th? s? d?ng"
-        read -p "Nh?p t�n ph�n v�ng disk mu?n t?o (nh?p d?ng sdbx) : " partition_number
+        echo "Tên $nameOfVolumeGroup có thể sử dụng"
+        read -p "Nhập tên phân vùng disk muốn tạo (nhập dạng sdbx) : " partition_number
         vgcreate $nameOfVolumeGroup /dev/$partition_number
     fi
 }
 
-# ??ng � t?o ? c?ng
-function accept_create() {
-    read -p "B?n c� ??ng � t?o ? ??a m?i kh�ng? (y/n): " choice
-    case $choice in
-    [yY])
-        while true; do
-            read -p "Nh?p s? c?a ph�n v�ng $nameOFdisk (ch? c?n nh?p s?), n?u Enter ko nh?p g� th� m?c ??nh theo th? t? (v� d?: $nameOFdisk 1, $nameOFdisk 2,..): " partitionNumber
-
-              if ls /dev | grep -q $nameOFdisk$partitionNumber && [ -n "$partitionNumber" ]; then
-                echo "C� ? c?ng n�y r?i ng??i anh em ?i"
-            else
-
-                # Check s?
-                function is_number() {
-                    [[ $1 =~ ^[0-9]+$ ]]
-                }
-
-                while true; do
-                    read -p "Nh?p dung l??ng theo GB: " capacityNumber
-
-                    if is_number "$capacityNumber"; then
-                        break
-                    else
-                        echo "Nh?p s? th�i ng??i anh em"
-                    fi
-                done
-
-                if [ -n "$partitionNumber" ]; then
-                    # ??y config theo s? ???c nh?p
-                    create_partition_disk $nameOFdisk $capacityNumber $partitionNumber
-                    echo " "
-                    echo "Danh S�ch ph�n v�ng lsblk m?i"
-                    echo " "
-                    lsblk
-                    # create_volume_group
+# Check điều kiện tạo ổ cứng và tạo ổ cứng
+function conditionCreateDisk {
+    while true; do
+        read -p "Nhập số của phân vùng $nameOFdisk (chỉ cần nhập số), NÊN Enter ko nhập gì thì mặc định theo thứ tự (ví dụ: $nameOFdisk 1, $nameOFdisk 2,..): " partitionNumber
+        
+        if ls /dev | grep -q $nameOFdisk$partitionNumber && [ -n "$partitionNumber" ]; then
+            echo "Có ổ cứng này rồi người anh em ơi"
+        else
+            
+            # Check chỉ được nhập số
+            function is_number() {
+                [[ $1 =~ ^[0-9]+$ ]]
+            }
+            
+            while true; do
+                read -p "Nhập dung lượng theo GB: " capacityNumber
+                
+                if is_number "$capacityNumber"; then
+                    break
                 else
-                    # ??y m?c ??nh s? th? t? d?ng sdb1 sdb2 sdb3
-                    create_partition_disk $nameOFdisk $capacityNumber $partitionNumber
-                    echo " "
-                    echo "Danh S�ch ph�n v�ng lsblk m?i"
-                    echo " "
-                    lsblk
-                    # create_volume_group
+                    echo "Nhập số thôi người anh em"
                 fi
-
+            done
+            
+            if [ -n "$partitionNumber" ]; then
+                # Đẩy config theo số phân vùng được nhập vào fdisk
+                create_partition_disk $nameOFdisk $capacityNumber $partitionNumber
+                # create_volume_group
+                echo " "
+                echo "LIST LSLBK MỚI , VUI LÒNG KIỂM TRA LẠI NHÉ: "
+                echo " "
+                lsblk
+                echo "----------- DONE -----------  "
+                exit_va_clear
+            else
+                # Nếu không nhập gì $partitionNumber là rỗng, Mặc định sẽ theo thứ tự là sdb1 sdb2 sdb3
+                create_partition_disk $nameOFdisk $capacityNumber $partitionNumber
+                # create_volume_group
+                echo " "
+                echo "LIST LSLBK MỚI , VUI LÒNG KIỂM TRA LẠI NHÉ: "
+                echo " "
+                lsblk
+                echo "----------- DONE -----------  "
+                exit_va_clear
             fi
-        done
-        ;;
+            
+        fi
+    done
+}
 
-    [nN])
-        exit
+
+# Đồng ý tạo ổ cứng
+function accept_create() {
+    read -p "Bạn có đồng ý tạo ổ đĩa mới không? (y/n): " choice
+    case $choice in
+        [yY])
+            conditionCreateDisk
+        ;;
+        
+        [nN])
+            exit_va_clear
         ;;
     esac
 }
@@ -141,59 +171,78 @@ function accept_create() {
 # MAIN FUNCTIONS
 function tao_sdxY() {
     echo " "
-    read -p "Nh?p t�n ? ??a mu?n t?o (nh?p d?ng sdx) : " nameOFdisk
-    # Ki?m tra k� t? nh?p
-    if [ ${#nameOFdisk} -gt 3 ]; then
-        echo "Nh?p sai t�n r?i ph�n, l�m g� c� ? n�o l� $nameOFdisk, t? tho�t sau 2s "
+    read -p "Nhập tên ổ đĩa muốn tạo (nhập dạng sdx) : " nameOFdisk
+    # Kiểm tra ký tự nhập
+    if [ ${#nameOFdisk} -lt 3 ]; then
+        echo "Nhập sai tên rồi phèn, làm gì có ổ nào là $nameOFdisk, tự thoát sau 2s "
         sleep 2
         exit
     else
         if ls /dev | grep -q $nameOFdisk; then
-            # N?u t?n t?i ? c?ng th� check ti?p dung l??ng
+            # Nếu tồn tại ổ cứng thì check tiếp dung lượng
             mapfile -t size_free_space < <(parted /dev/$nameOFdisk unit s print free | awk '/Free Space/ {print $3}' | sed 's/s$//')
-
+            clear
+            lay_thong_tin_disk
+            echo_space
             array_length=${#size_free_space[@]}
-
-            disk_space_sector_default="${size_free_space[0]}"
-            disk_space_sector="${size_free_space[1]}"
-
-            # echo "?? d�i m?ng size_free_space ${#size_free_space[@]}"
-            case $array_length in
-            1)
-                if [ "$disk_space_sector_default" -gt 5000 ]; then
-                    echo "Dung l??ng v?n c�n b?n c� th? t?o ? c?ng"
-                    accept_create
-                else
-                    echo "H?t dung l??ng"
-                    exit
-                fi
-                ;;
-
-            2 | *)
-
-                if [ "$disk_space_sector" -gt 5000 ]; then
-                    echo "Dung l??ng v?n c�n b?n c� th? t?o ? c?ng"
-                    accept_create
-
-                else
-                    echo "H?t dung l??ng"
-                    exit
-                fi
-                ;;
-            esac
-
+            # echo $array_length
+            if [ "$array_length" = 0 ]; then
+                echo_dongke
+                echo "Có thể tạo phân vùng trên ổ cứng này !"
+                echo_dongke
+                accept_create
+            else
+                disk_space_sector_default="${size_free_space[0]}"
+                disk_space_sector="${size_free_space[1]}"
+                
+                case $array_length in
+                    1)
+                        if [ "$disk_space_sector_default" -gt 5000 ]; then
+                            echo_dongke
+                            echo "Dung lượng vẫn còn bạn có thể tạo ổ cứng"
+                            echo_dongke
+                            accept_create
+                        else
+                            echo_space
+                            echo "HẾT DUNG LƯỢNG Ổ CỨNG $nameOFdisk"
+                            echo_space
+                            exit
+                        fi
+                    ;;
+                    
+                    2 | *)
+                        
+                        if [ "$disk_space_sector" -gt 5000 ]; then
+                            echo_dongke
+                            echo "Dung lượng vẫn còn bạn có thể tạo ổ cứng"
+                            echo_dongke
+                            accept_create
+                            
+                        else
+                            echo_space
+                            echo "HẾT DUNG LƯỢNG Ổ CỨNG $nameOFdisk"
+                            echo_space
+                            exit
+                        fi
+                    ;;
+                    
+                esac
+            fi
+            
         else
-            # Kh�ng t?n t?i
-            echo "Kh�ng c� ? c?ng n�o l� $nameOFdisk"
+            # Không tồn tại
+            echo "Không có ổ cứng nào là $nameOFdisk"
         fi
     fi
-
+    
 }
 
-# Menu script
+
+
+######################## Menu script #########################
 echo "---------------------------------------------------------------------------------"
 echo "---------------------------------------------------------------------------------"
-echo "----                                N�NG C?P ? C?NG                          ----"
+echo "----                                NÂNG CẤP Ổ CỨNG                          ----"
 echo "----                     Distribution Linux: Ubuntu/RHEL/CentOS              ----"
 echo "----                                  **ver0.1**                             ----"
 echo "----                             *create by Daz9_Tu4n*                       ----"
@@ -201,19 +250,17 @@ list_menu
 echo "---------------------------------------------------------------------------------"
 echo "---------------------------------------------------------------------------------"
 
-read -p "Vui l�ng ch?n option [1-${#arrayMenu[@]}]" choice
+read -p "Vui lòng chọn option [1-${#arrayMenu[@]}] : " choice
 case $choice in
-1)
-    clear
-    lay_thong_tin_disk
-    tao_sdxY
+    1)
+        clear
+        lay_thong_tin_disk
+        tao_sdxY
     ;;
-2)
-    clear
-    exit
+    2)
+        exit_va_clear
     ;;
-*)
-    clear
-    exit
+    *)
+        exit_va_clear
     ;;
 esac
