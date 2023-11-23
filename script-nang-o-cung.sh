@@ -20,7 +20,7 @@ function exit_va_clear(){
 # Danh sách menu
 function list_menu() {
     for ((i = 0; i < ${#arrayMenu[@]}; i++)); do
-        echo "                                 $((i + 1)). ${arrayMenu[$i]}                          "
+        echo "----                  $((i + 1)). ${arrayMenu[$i]}          "
     done
 }
 # Lấy thông tin disk
@@ -153,7 +153,6 @@ function conditionCreateDisk {
     done
 }
 
-
 # Đồng ý tạo ổ cứng
 function accept_create() {
     read -p "Bạn có đồng ý tạo ổ đĩa mới không? (y/n): " choice
@@ -242,14 +241,19 @@ function tao_sdxY() {
 ######################## Menu script #########################
 echo "---------------------------------------------------------------------------------"
 echo "---------------------------------------------------------------------------------"
-echo "----                                NÂNG CẤP Ổ CỨNG                          ----"
-echo "----                     Distribution Linux: Ubuntu/RHEL/CentOS              ----"
+echo "----                                                                         ----"
+echo "----                                                                         ----"
+echo "----                                TOOL Ổ CỨNG                              ----"
+echo "----                    For distribution Linux: Ubuntu/RHEL/CentOS           ----"
 echo "----                                  **ver0.1**                             ----"
+echo "----                                                                         ----"
 echo "----                             *create by Daz9_Tu4n*                       ----"
+echo "----                                                                         ----"
 list_menu
+echo "----                                                                         ----"
 echo "---------------------------------------------------------------------------------"
 echo "---------------------------------------------------------------------------------"
-
+echo_space
 read -p "Vui lòng chọn option [1-${#arrayMenu[@]}] : " choice
 case $choice in
     1)
@@ -261,6 +265,7 @@ case $choice in
         exit_va_clear
     ;;
     *)
+        clear
         exit_va_clear
     ;;
 esac
