@@ -1,12 +1,8 @@
-# T?NG H?P SHELL SCRIPT LINUX
+# TOTAL SHELL SCRIPT LINUX
 
 Create by : Daz9_Tu4n
 
-
-
 ## Clone sourcecode
-
-Link [sourcecode ](https://github.com/darktuan1993/Shell-Total-Script)
 
 ```bash
 git clone https://github.com/darktuan1993/Shell-Total-Script
