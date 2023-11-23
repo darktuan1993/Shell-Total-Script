@@ -10,7 +10,7 @@ git clone https://github.com/darktuan1993/Shell-Total-Script
 
 ## Contributing
 
-Contributor: elvizhuy [github ](https://github.com/elvizhuy)
+Contributor: [elvizhuy ](https://github.com/elvizhuy)
 
 ## License
 
