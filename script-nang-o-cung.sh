@@ -1,5 +1,5 @@
-##### Variable List ######333
-arrayMenu=("T?o phân vùng m?i" "Nâng dung l??ng ? c?ng" "Thoát")
+########### Variable List ###########
+arrayMenu=("T?o phân disk m?i và mount" "Nâng c?p dung l??ng" "Thoát")
 mapfile -t vg_names < <(vgdisplay | awk '/VG Name/ {print $3}')
 capacityNumber=""
 
@@ -9,25 +9,25 @@ function list_menu() {
         echo "                                 $((i + 1)). ${arrayMenu[$i]}                          "
     done
 }
-# L?y thông tin ? disk
+# L?y thông tin disk
 function lay_thong_tin_disk() {
     clear
     echo " "
-    echo "============================ Check thông tin ? ??a df -HT ==================================="
+    echo "============================ Check thông tin phân vùng df -HT ==================================="
     df -hT
     echo " "
-    echo "============================ Check thông tin ? ??a lsblk ============================"
+    echo "============================ Check thông tin ??a lsblk ============================"
     lsblk
 }
 
-# T?o phân vùng
+# T?o Phân vùng
 function create_partition_disk() {
     nameDisk=$1
     capacityDisk=$2
     partitionNumber=$3
 
     echo "Tên disk: $nameDisk"
-    echo "Kh?i l??ng: $capacityDisk"
+    echo "Dung l??ng: $capacityDisk"
     echo "Partition : $partitionNumber"
 
     if [ -n "$3" ]; then
@@ -63,9 +63,9 @@ EOF
 
 }
 
-# T?o volume group
+# T?o volume group VG
 function create_volume_group() {
-    read -p "Nh?p tên volume-group mu?n t?o : " nameOfVolumeGroup
+    read -p "Nh?p tên volume group mu?n t?o : " nameOfVolumeGroup
     # Check volume group
     # echo " Danh sách volume group:  ${vg_names[@]}  "
     for vg_name in "${vg_names[@]}"; do
@@ -75,26 +75,24 @@ function create_volume_group() {
         fi
     done
     if [ "$found" == true ]; then
-        echo "Tên $nameOfVolumeGroup ?ã ???c s? d?ng"
+        echo "Tên $nameOfVolumeGroup ?ã ???c s? d?ng r?i !"
     else
         echo "Tên $nameOfVolumeGroup có th? s? d?ng"
-        read -p "Nh?p tên phân vùng mu?n t?o (nh?p d?ng sdbx) : " partition_number
+        read -p "Nh?p tên phân vùng disk mu?n t?o (nh?p d?ng sdbx) : " partition_number
         vgcreate $nameOfVolumeGroup /dev/$partition_number
     fi
 }
 
 # ??ng ý t?o ? c?ng
 function accept_create() {
-    read -p "B?n có ??ng ý t?o ? c?ng không? (y/n): " choice
+    read -p "B?n có ??ng ý t?o ? ??a m?i không? (y/n): " choice
     case $choice in
     [yY])
         while true; do
-            read -p "Nh?p s? phân vùng, ch? nh?p s? không c?n nh?p tên sdX, không nh?p gì là m?c ??nh theo th? t? (ví d?: $nameOFdisk 1, $nameOFdisk 2,..): " partitionNumber
+            read -p "Nh?p s? c?a phân vùng $nameOFdisk (ch? c?n nh?p s?), n?u Enter ko nh?p gì thì m?c ??nh theo th? t? (ví d?: $nameOFdisk 1, $nameOFdisk 2,..): " partitionNumber
 
               if ls /dev | grep -q $nameOFdisk$partitionNumber && [ -n "$partitionNumber" ]; then
-
-
-                echo "?ã có ? c?ng này rùi"
+                echo "Có ? c?ng này r?i ng??i anh em ?i"
             else
 
                 # Check s?
@@ -103,12 +101,12 @@ function accept_create() {
                 }
 
                 while true; do
-                    read -p "Nh?p dung l??ng tính theo GB: " capacityNumber
+                    read -p "Nh?p dung l??ng theo GB: " capacityNumber
 
                     if is_number "$capacityNumber"; then
                         break
                     else
-                        echo "Vui lòng ch? nh?p s?."
+                        echo "Nh?p s? thôi ng??i anh em"
                     fi
                 done
 
@@ -143,15 +141,15 @@ function accept_create() {
 # MAIN FUNCTIONS
 function tao_sdxY() {
     echo " "
-    read -p "Nh?p tên ? ??a mu?n x? lý (? disk có d?ng sdX) : " nameOFdisk
-    # Ki?m tra ký t? nh?p vào n?u > 3 thì báo nh?p sai ki?u tên ? c?ng
+    read -p "Nh?p tên ? ??a mu?n t?o (nh?p d?ng sdx) : " nameOFdisk
+    # Ki?m tra ký t? nh?p
     if [ ${#nameOFdisk} -gt 3 ]; then
-        echo "nh?p sai tên ? c?ng làm gì có ? c?ng nào tên là $nameOFdisk, t? thoát sau 3s "
-        sleep 3
+        echo "Nh?p sai tên r?i phèn, làm gì có ? nào là $nameOFdisk, t? thoát sau 2s "
+        sleep 2
         exit
     else
         if ls /dev | grep -q $nameOFdisk; then
-            # T?n t?i ? c?ng thì t?o ti?p t?c check dung l??ng
+            # N?u t?n t?i ? c?ng thì check ti?p dung l??ng
             mapfile -t size_free_space < <(parted /dev/$nameOFdisk unit s print free | awk '/Free Space/ {print $3}' | sed 's/s$//')
 
             array_length=${#size_free_space[@]}
@@ -163,7 +161,7 @@ function tao_sdxY() {
             case $array_length in
             1)
                 if [ "$disk_space_sector_default" -gt 5000 ]; then
-                    echo "Dung l??ng còn, b?n có th? t?o ? c?ng"
+                    echo "Dung l??ng v?n còn b?n có th? t?o ? c?ng"
                     accept_create
                 else
                     echo "H?t dung l??ng"
@@ -174,7 +172,7 @@ function tao_sdxY() {
             2 | *)
 
                 if [ "$disk_space_sector" -gt 5000 ]; then
-                    echo "Dung l??ng còn, b?n có th? t?o ? c?ng"
+                    echo "Dung l??ng v?n còn b?n có th? t?o ? c?ng"
                     accept_create
 
                 else
@@ -192,16 +190,18 @@ function tao_sdxY() {
 
 }
 
-# MENU FUNCTION
+# Menu script
 echo "---------------------------------------------------------------------------------"
 echo "---------------------------------------------------------------------------------"
-echo "----                                Nâng c?p ? c?ng                          ----"
+echo "----                                NÂNG C?P ? C?NG                          ----"
 echo "----                     Distribution Linux: Ubuntu/RHEL/CentOS              ----"
-echo "----                                  **ver1.1**                           ----"
+echo "----                                  **ver0.1**                             ----"
+echo "----                             *create by Daz9_Tu4n*                       ----"
 list_menu
 echo "---------------------------------------------------------------------------------"
 echo "---------------------------------------------------------------------------------"
-read -p "Vui lòng ch?n t? [1-${#arrayMenu[@]}]: " choice
+
+read -p "Vui lòng ch?n option [1-${#arrayMenu[@]}]" choice
 case $choice in
 1)
     clear

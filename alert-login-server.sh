@@ -8,7 +8,7 @@ URL="https://api.telegram.org/bot$TOKEN/sendMessage"
 DATE_EXEC="$(date "+%d-%m-%Y %H:%M")"
 HOST_NAME=$(hostnamectl | grep "Static hostname" | awk -F ": " '{print $2}')
 
-IP=$(echo $SSH_CLIENT | awk '{print $1}')
+I P=$(echo $SSH_CLIENT | awk '{print $1}')
 PORT=$(echo $SSH_CLIENT | awk '{print $3}')
 HOSTNAME=$(hostname -f)
 IPADDR=$(echo $SSH_CONNECTION | awk '{print $3}')
