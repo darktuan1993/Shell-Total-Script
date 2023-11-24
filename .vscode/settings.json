@@ -1,0 +1,4 @@
+{
+    "ansible.executionEnvironment.enabled": true,
+    "notebook.formatOnCellExecution": true
+}

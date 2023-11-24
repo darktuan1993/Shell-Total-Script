@@ -9,6 +9,9 @@ function echo_space(){
 function echo_dongke(){
     echo "----------------------------------------"
 }
+function echo_dongke_dai(){
+    echo "------------------------------------------------------------------------------"
+}
 function exit_va_clear(){
     exit
     sleep 1
@@ -86,62 +89,74 @@ EOF
     
 }
 
-# Tạo volume group VG
 function create_volume_group() {
     echo_space
     
     while true; do
         read -p "Nhập tên volume group muốn tạo : " nameOfVolumeGroup
         # Check volume group
-        # echo " Danh sách volume group:  ${vg_names[@]}  "
         found=false
         for vg_name in "${vg_names[@]}"; do
             if [ "$vg_name" == "$nameOfVolumeGroup" ]; then
                 found=true
             fi
         done
-        # echo $found
+        
         if [ "$found" == true ]; then
-            echo "Tên $nameOfVolumeGroup đã được sử dụng rồi !"
+            echo "[WARNING] Tên $nameOfVolumeGroup đã được sử dụng rồi !"
         else
             echo_space
-            echo "Tên '"$nameOfVolumeGroup"' có thể sử dụng"
+            echo "[INFO]Tên '"$nameOfVolumeGroup"' có thể sử dụng"
             echo_space
-            read -p "Bạn có chắc muốn tạo volume group (VG) trên disk $nameOFdisk (y/n) : " choice
+            read -p "[INFO]Bạn có chắc muốn tạo volume group (VG) trên disk $nameOFdisk (y/n) : " choice
             echo_space
             case $choice in
                 [yY])
                     echo_space
                     while true; do
-                        read -p "Bạn hãy xem lại danh sách lsblk mới nhất và điền phân vùng disk muốn tạo tạo volume group (viết dưới dạng sdx1,sdX2,..) " diskPartition
+                        read -p "[INFO] Bạn hãy xem lại danh sách lsblk mới nhất và điền phân vùng disk muốn tạo tạo volume group (viết dưới dạng sdx1,sdX2,..) " diskPartition
                         if [ ${#diskPartition} -lt 4 ]; then
                             checkCharater $diskPartition
                         else
                             # Kiểm tra ổ cứng
                             if ls /dev | grep -q $diskPartition; then
-                                vgcreate $nameOfVolumeGroup /dev/$diskPartition
-                                vgdisplay
-                                break
-                                break
+                                # Nếu tồn tại diskpartition thì tạo volume group check thêm điều kiện disk đã tạo volume group nào chưa
+                                # Check tiếp disk đã tạo volume group hay chưa
+                                vg_exist=$(pvdisplay /dev/$diskPartition | awk '/VG Name/ {print $3}')
+                                echo $vg_exist
+                                if [ -z "$vg_exist" ]; then
+                                    echo "[SUCCESS] Partition này chưa tạo volume group tạo nhé"
+                                    echo_dongke
+                                    vgcreate $nameOfVolumeGroup /dev/$diskPartition
+                                    echo_dongke
+                                    break 2  # Ngắt cả hai vòng lặp
+                                else
+                                    echo_space
+                                    echo_dongke
+                                    echo "[WARNING] Partition $diskPartition này đã tạo volume group (VG) $vg_exist rồi vui lòng chọn disk khác nhé"
+                                    echo_dongke
+                                    echo_space
+                                fi
                             else
                                 echo_space
-                                echo "không có ổ $diskPartition, hoặc ổ này đã đc tạo volume group rồi, hoặc không đúng định dạng"
+                                echo_dongke
+                                echo "[ERROR] không có ổ $diskPartition, hoặc ổ này đã đc tạo volume group rồi, hoặc không đúng định dạng"
+                                echo_dongke
                                 echo_space
                             fi
                         fi
-                        break
                     done
-                    break
                 ;;
                 
                 [nN])
                     echo "Thoát"
                 ;;
             esac
-            
         fi
     done
 }
+
+
 
 # Tạo Logical Volume LV
 function create_logical_volume {
@@ -169,7 +184,7 @@ function create_logical_volume {
 # ---------------------------------- Điều kiện -------------------------------------
 # Điều kiện check ký tự
 function checkCharater {
-    echo "Nhập sai tên ổ cứng hoặc ổ cứng không có, hoặc sai định dạng ổ cứng $1"
+    echo "[WARNING] Nhập sai tên ổ cứng hoặc ổ cứng không có, hoặc sai định dạng ổ cứng $1"
 }
 # Điều kiện chỉ được nhập số
 function is_number() {
@@ -183,7 +198,11 @@ function conditionCreateDisk {
         
         if is_number "$partitionNumber" || [ -z "$partitionNumber" ]; then
             if ls /dev | grep -q $nameOFdisk$partitionNumber && [ -n "$partitionNumber" ]; then
-                echo "Có ổ cứng này rồi người anh em ơi"
+                echo_space
+                echo_dongke_dai
+                echo " $(date)-[ERROR]-Có ổ cứng này rồi người anh em ơi"
+                echo_dongke_dai
+                echo_space
             else
                 while true; do
                     echo_dongke
@@ -192,7 +211,7 @@ function conditionCreateDisk {
                     if is_number "$capacityNumber"; then
                         break
                     else
-                        echo "Nhập số thôi người anh em?"
+                        echo "[WARNING] Nhập số thôi người anh em?"
                     fi
                 done
                 
@@ -228,7 +247,7 @@ function conditionCreateDisk {
                 
             fi
         else
-            echo "Nhập số thôi người anh em"
+            echo "[WARNING] Nhập số thôi người anh em"
         fi
     done
 }
@@ -266,7 +285,7 @@ function tao_sdxY() {
             # echo $array_length
             if [ "$array_length" = 0 ]; then
                 echo_dongke
-                echo "Có thể tạo phân vùng trên ổ cứng này !"
+                echo "[INFO] Có thể tạo phân vùng trên ổ cứng này !"
                 echo_dongke
                 accept_create
             else
@@ -277,12 +296,12 @@ function tao_sdxY() {
                     1)
                         if [ "$disk_space_sector_default" -gt 5000 ]; then
                             echo_dongke
-                            echo "Dung lượng vẫn còn bạn có thể tạo ổ cứng"
+                            echo "[SUCCESS] Dung lượng vẫn còn bạn có thể tạo ổ cứng"
                             echo_dongke
                             accept_create
                         else
                             echo_space
-                            echo "HẾT DUNG LƯỢNG Ổ CỨNG $nameOFdisk"
+                            echo "[ERROR] HẾT DUNG LƯỢNG Ổ CỨNG $nameOFdisk"
                             echo_space
                             exit
                         fi
@@ -292,13 +311,13 @@ function tao_sdxY() {
                         
                         if [ "$disk_space_sector" -gt 5000 ]; then
                             echo_dongke
-                            echo "Dung lượng vẫn còn bạn có thể tạo ổ cứng"
+                            echo "[SUCCESS] Dung lượng vẫn còn bạn có thể tạo ổ cứng"
                             echo_dongke
                             accept_create
                             
                         else
                             echo_space
-                            echo "HẾT DUNG LƯỢNG Ổ CỨNG $nameOFdisk"
+                            echo "[ERROR] HẾT DUNG LƯỢNG Ổ CỨNG $nameOFdisk"
                             echo_space
                             exit
                         fi
