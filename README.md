@@ -8,10 +8,10 @@ Create by : Daz9_Tu4n
 git clone https://github.com/darktuan1993/Shell-Total-Script
 ```
 
-## Contributing
+## Người Đóng Góp
 
 Contributor: [elvizhuy ](https://github.com/elvizhuy)
 
-## License
+## Bản quyền
 
 [MIT](https://choosealicense.com/licenses/mit/)
