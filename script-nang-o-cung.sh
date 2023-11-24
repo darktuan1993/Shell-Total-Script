@@ -147,12 +147,13 @@ function create_logical_volume {
     while true; do
         read -p "Nhập tên logical volume muốn tạo : " nameOfLogicalVolume
         
-        lvAndvg = $nameOfVolumeGroup-$nameOfLogicalVolume
+        lvAndvg="${nameOfVolumeGroup}-${nameOfLogicalVolume}"
         echo  $lvAndvg
         if ls /dev/mapper | grep -q $lvAndvg ; then
             echo "Đã có logical volume này rồi"
         else
             echo "Chưa có nhé anh em có thể tạo"
+            break
         fi
         # echo "Tên volume group là : "$nameOfVolumeGroup
         
