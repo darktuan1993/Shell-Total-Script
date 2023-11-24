@@ -1,4 +1,4 @@
-﻿########### VARIABLE ###########
+﻿# ---------------------------------- VARIABLE & EFFECT ----------------------------------
 arrayMenu=("Tạo phân disk mới và mount" "Nâng cấp dung lượng" "Thoát")
 mapfile -t vg_names < <(vgdisplay | awk '/VG Name/ {print $3}')
 capacityNumber=""
@@ -14,9 +14,10 @@ function exit_va_clear(){
     sleep 1
     clear
 }
-########### END VARIABLE ###########
+# ---------------------------------- END VARIABLE ----------------------------------
 
 
+# ---------------------------------- Menu Content ----------------------------------
 # Danh sách menu
 function list_menu() {
     for ((i = 0; i < ${#arrayMenu[@]}; i++)); do
@@ -33,6 +34,8 @@ function lay_thong_tin_disk() {
     echo "============================ Check thông tin đĩa lsblk ============================"
     lsblk
 }
+
+# ---------------------------------- Tạo Các thứ -------------------------------------
 
 # Tạo Phân vùng trong fdisk
 function create_partition_disk() {
@@ -163,6 +166,7 @@ function create_logical_volume {
     done
 }
 
+# ---------------------------------- Điều kiện -------------------------------------
 # Điều kiện check ký tự
 function checkCharater {
     echo "Nhập sai tên ổ cứng hoặc ổ cứng không có, hoặc sai định dạng ổ cứng $1"
@@ -242,7 +246,7 @@ function accept_create() {
         ;;
     esac
 }
-
+# ---------------------------------- Main Function -------------------------------------
 # MAIN FUNCTIONS
 function tao_sdxY() {
     echo " "
@@ -318,11 +322,11 @@ echo "--------------------------------------------------------------------------
 echo "---------------------------------------------------------------------------------"
 echo "----                                                                         ----"
 echo "----                                                                         ----"
-echo "----                                TOOL Ổ CỨNG                              ----"
+echo "----                                 TOOL Ổ CỨNG                              ----"
 echo "----                    For distribution Linux: Ubuntu/RHEL/CentOS           ----"
 echo "----                                  **ver0.1**                             ----"
 echo "----                                                                         ----"
-echo "----                             *create by Daz9_Tu4n*                       ----"
+echo "----                            *create by Daz9_Tu4n*                        ----"
 echo "----                                                                         ----"
 list_menu
 echo "----                                                                         ----"
