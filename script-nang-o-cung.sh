@@ -141,7 +141,6 @@ function create_volume_group() {
 }
 
 # Tạo Logical Volume LV
-
 function create_logical_volume {
     echo_space
     while true; do
@@ -150,13 +149,17 @@ function create_logical_volume {
         lvAndvg="${nameOfVolumeGroup}-${nameOfLogicalVolume}"
         echo  $lvAndvg
         if ls /dev/mapper | grep -q $lvAndvg ; then
-            echo "Đã có logical volume này rồi"
+            echo_dongke
+            echo "Đã có logical volume này rồi, vui lòng nhập lại tên khác !"
+            echo_dongke
         else
-            echo "Chưa có nhé anh em có thể tạo"
+            echo_dongke
+            echo_space
+            echo "......Đang trong quá trình tạo Logical Volume......"
+            echo_space
+            echo_dongke
             break
         fi
-        # echo "Tên volume group là : "$nameOfVolumeGroup
-        
     done
 }
 
@@ -179,12 +182,13 @@ function conditionCreateDisk {
                 echo "Có ổ cứng này rồi người anh em ơi"
             else
                 while true; do
+                    echo_dongke
                     read -p "Nhập dung lượng theo GB: " capacityNumber
-                    
+                    echo_dongke
                     if is_number "$capacityNumber"; then
                         break
                     else
-                        echo "Nhập số thôi người anh em"
+                        echo "Nhập số thôi người anh em?"
                     fi
                 done
                 
