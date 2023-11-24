@@ -11,13 +11,13 @@ git clone https://github.com/darktuan1993/Shell-Total-Script
 #### Chức năng chính
 
 ```python
-import foobar
+
  - Tạo partition mới
  - Tạo volume group
  - Tạo logical volume
  - Validate các kiểu nhập vào
  - Xuất log khi tạo (tính năng cập nhật sau)
- 
+
 ```
 
 #### Người Đóng Góp
