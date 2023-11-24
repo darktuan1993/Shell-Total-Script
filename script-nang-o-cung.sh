@@ -85,6 +85,7 @@ EOF
 
 # Tạo volume group VG
 function create_volume_group() {
+    echo_space
     read -p "Nhập tên volume group muốn tạo : " nameOfVolumeGroup
     # Check volume group
     # echo " Danh sách volume group:  ${vg_names[@]}  "
@@ -97,10 +98,47 @@ function create_volume_group() {
     if [ "$found" == true ]; then
         echo "Tên $nameOfVolumeGroup đã được sử dụng rồi !"
     else
-        echo "Tên $nameOfVolumeGroup có thể sử dụng"
-        read -p "Nhập tên phân vùng disk muốn tạo (nhập dạng sdbx) : " partition_number
-        vgcreate $nameOfVolumeGroup /dev/$partition_number
+        echo_space
+        echo "Tên '"$nameOfVolumeGroup"' có thể sử dụng"
+        echo_space
+        read -p "Bạn có chắc muốn tạo volume group (VG) trên disk $nameOFdisk (y/n) : " choice
+        echo_space
+        case $choice in
+            [yY])
+                echo_space
+                while true; do
+                    read -p "Bạn hãy xem lại danh sách lsblk mới nhất và điền phân vùng disk muốn tạo tạo volume group (viết dưới dạng sdx1,sdX2,..) " diskPartition
+                    if [ ${#diskPartition} -lt 4 ]; then
+                        checkCharater $diskPartition
+                    else
+                        # Kiểm tra ổ cứng
+                        if ls /dev | grep -q $diskPartition; then
+                            # vgcreate $nameOfVolumeGroup /dev/$diskPartition
+                            vgdisplay
+                            break
+                        else
+                            echo_space
+                            echo "không có ổ $diskPartition, hoặc ổ này đã đc tạo volume group rồi, hoặc không đúng định dạng"
+                            echo_space
+                        fi
+                    fi
+                done
+            ;;
+            
+            [nN])
+                echo "Thoát"
+            ;;
+        esac
     fi
+}
+
+# Điều kiện check ký tự
+function checkCharater {
+    echo "Nhập sai tên rồi phèn, làm gì có ổ nào là $1"
+}
+# Điều kiện chỉ được nhập số
+function is_number() {
+    [[ $1 =~ ^[0-9]+$ ]]
 }
 
 # Check điều kiện tạo ổ cứng và tạo ổ cứng
@@ -108,47 +146,49 @@ function conditionCreateDisk {
     while true; do
         read -p "Nhập số của phân vùng $nameOFdisk (chỉ cần nhập số), NÊN Enter ko nhập gì thì mặc định theo thứ tự (ví dụ: $nameOFdisk 1, $nameOFdisk 2,..): " partitionNumber
         
-        if ls /dev | grep -q $nameOFdisk$partitionNumber && [ -n "$partitionNumber" ]; then
-            echo "Có ổ cứng này rồi người anh em ơi"
-        else
-            
-            # Check chỉ được nhập số
-            function is_number() {
-                [[ $1 =~ ^[0-9]+$ ]]
-            }
-            
-            while true; do
-                read -p "Nhập dung lượng theo GB: " capacityNumber
-                
-                if is_number "$capacityNumber"; then
-                    break
-                else
-                    echo "Nhập số thôi người anh em"
-                fi
-            done
-            
-            if [ -n "$partitionNumber" ]; then
-                # Đẩy config theo số phân vùng được nhập vào fdisk
-                create_partition_disk $nameOFdisk $capacityNumber $partitionNumber
-                # create_volume_group
-                echo " "
-                echo "LIST LSLBK MỚI , VUI LÒNG KIỂM TRA LẠI NHÉ: "
-                echo " "
-                lsblk
-                echo "----------- DONE -----------  "
-                exit_va_clear
+        if is_number "$partitionNumber" || [ -z "$partitionNumber" ]; then
+            if ls /dev | grep -q $nameOFdisk$partitionNumber && [ -n "$partitionNumber" ]; then
+                echo "Có ổ cứng này rồi người anh em ơi"
             else
-                # Nếu không nhập gì $partitionNumber là rỗng, Mặc định sẽ theo thứ tự là sdb1 sdb2 sdb3
-                create_partition_disk $nameOFdisk $capacityNumber $partitionNumber
-                # create_volume_group
-                echo " "
-                echo "LIST LSLBK MỚI , VUI LÒNG KIỂM TRA LẠI NHÉ: "
-                echo " "
-                lsblk
-                echo "----------- DONE -----------  "
-                exit_va_clear
+                while true; do
+                    read -p "Nhập dung lượng theo GB: " capacityNumber
+                    
+                    if is_number "$capacityNumber"; then
+                        break
+                    else
+                        echo "Nhập số thôi người anh em"
+                    fi
+                done
+                
+                if [ -n "$partitionNumber" ]; then
+                    # Đẩy config theo số phân vùng được nhập vào fdisk
+                    # create_partition_disk $nameOFdisk $capacityNumber $partitionNumber
+                    echo_dongke
+                    echo " "
+                    echo "LIST LSLBK MỚI , VUI LÒNG KIỂM TRA LẠI NHÉ: "
+                    echo " "
+                    lsblk
+                    echo "----------- DONE -----------  "
+                    echo_dongke
+                    create_volume_group
+                    exit_va_clear
+                else
+                    # Nếu không nhập gì $partitionNumber là rỗng, Mặc định sẽ theo thứ tự là sdb1 sdb2 sdb3
+                    # create_partition_disk $nameOFdisk $capacityNumber $partitionNumber
+                    echo_dongke
+                    echo " "
+                    echo "LIST LSLBK MỚI , VUI LÒNG KIỂM TRA LẠI NHÉ: "
+                    echo " "
+                    lsblk
+                    echo "----------- DONE -----------  "
+                    echo_dongke
+                    create_volume_group
+                    exit_va_clear
+                fi
+                
             fi
-            
+        else
+            echo "Nhập số thôi người anh em"
         fi
     done
 }
@@ -173,11 +213,10 @@ function tao_sdxY() {
     read -p "Nhập tên ổ đĩa muốn tạo (nhập dạng sdx) : " nameOFdisk
     # Kiểm tra ký tự nhập
     if [ ${#nameOFdisk} -lt 3 ]; then
-        echo "Nhập sai tên rồi phèn, làm gì có ổ nào là $nameOFdisk, tự thoát sau 2s "
-        sleep 2
+        checkCharater $nameOFdisk
         exit
     else
-        if ls /dev | grep -q $nameOFdisk; then
+        if ls /dev | grep -q $nameOFdisk && [ ${#nameOFdisk} = 3 ]; then
             # Nếu tồn tại ổ cứng thì check tiếp dung lượng
             mapfile -t size_free_space < <(parted /dev/$nameOFdisk unit s print free | awk '/Free Space/ {print $3}' | sed 's/s$//')
             clear
