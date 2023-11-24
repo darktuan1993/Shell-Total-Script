@@ -95,11 +95,10 @@ function create_volume_group() {
         for vg_name in "${vg_names[@]}"; do
             if [ "$vg_name" == "$nameOfVolumeGroup" ]; then
                 found=true
-                # break
             fi
         done
         # echo $found
-        if [ "$found" == true ]; then   
+        if [ "$found" == true ]; then
             echo "Tên $nameOfVolumeGroup đã được sử dụng rồi !"
         else
             echo_space
@@ -120,19 +119,23 @@ function create_volume_group() {
                                 vgcreate $nameOfVolumeGroup /dev/$diskPartition
                                 vgdisplay
                                 break
+                                break
                             else
                                 echo_space
                                 echo "không có ổ $diskPartition, hoặc ổ này đã đc tạo volume group rồi, hoặc không đúng định dạng"
                                 echo_space
                             fi
                         fi
+                        break
                     done
+                    break
                 ;;
                 
                 [nN])
                     echo "Thoát"
                 ;;
             esac
+            
         fi
     done
 }
@@ -141,8 +144,19 @@ function create_volume_group() {
 
 function create_logical_volume {
     echo_space
-    read -p "Nhập tên logical volume muốn tạo : " nameOfLogicalVolume
-    echo "Tên volume group là : "$nameOfVolumeGroup
+    while true; do
+        read -p "Nhập tên logical volume muốn tạo : " nameOfLogicalVolume
+        
+        lvAndvg = $nameOfVolumeGroup-$nameOfLogicalVolume
+        echo  $lvAndvg
+        if ls /dev/mapper | grep -q $lvAndvg ; then
+            echo "Đã có logical volume này rồi"
+        else
+            echo "Chưa có nhé anh em có thể tạo"
+        fi
+        # echo "Tên volume group là : "$nameOfVolumeGroup
+        
+    done
 }
 
 # Điều kiện check ký tự
@@ -175,7 +189,7 @@ function conditionCreateDisk {
                 
                 if [ -n "$partitionNumber" ]; then
                     # Đẩy config theo số phân vùng được nhập vào fdisk
-                    # create_partition_disk $nameOFdisk $capacityNumber $partitionNumber
+                    create_partition_disk $nameOFdisk $capacityNumber $partitionNumber
                     echo_dongke
                     echo " "
                     echo "LIST LSLBK MỚI , VUI LÒNG KIỂM TRA LẠI NHÉ: "
@@ -189,7 +203,7 @@ function conditionCreateDisk {
                     exit_va_clear
                 else
                     # Nếu không nhập gì $partitionNumber là rỗng, Mặc định sẽ theo thứ tự là sdb1 sdb2 sdb3
-                    # create_partition_disk $nameOFdisk $capacityNumber $partitionNumber
+                    create_partition_disk $nameOFdisk $capacityNumber $partitionNumber
                     echo_dongke
                     echo " "
                     echo "LIST LSLBK MỚI , VUI LÒNG KIỂM TRA LẠI NHÉ: "
