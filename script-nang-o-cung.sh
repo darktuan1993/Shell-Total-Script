@@ -38,9 +38,23 @@ function lay_thong_tin_disk() {
     lsblk
 }
 
+# ---------------------------------- Điều kiện Cơ bản -------------------------------------
+# Điều kiện check ký tự
+function checkCharater {
+    echo "[WARNING] Nhập sai điều kiện input, không có thông về dữ liệu $1"
+}
+function checkCharaterPhysicalVolume {
+    echo "[WARNING] Nhập sai điều kiện input, không có thông về volume group cuar partition $1"
+}
+# Điều kiện chỉ được nhập số
+function is_number() {
+    [[ $1 =~ ^[0-9]+$ ]]
+}
+
+
 # ---------------------------------- Tạo Các thứ -------------------------------------
 
-# Tạo Phân vùng trong fdisk
+# Tạo Partition trong fdisk
 function create_partition_disk() {
     nameDisk=$1
     capacityDisk=$2
@@ -65,6 +79,8 @@ function create_partition_disk() {
         8e
         w
 EOF
+        echo "HỆ THỐNG TỰ ĐỘNG TẠO PHYSICAL VOLUME THEO THÔNG SỐ ĐÃ KHAI BÁO"
+        pvcreate /dev/$nameDisk$partitionNumber
         echo "TẠO PARTITION $nameDisk$partitionNumber THÀNH CÔNG"
     else
         # NHẤN ENTER LUÔN
@@ -87,6 +103,41 @@ EOF
         echo_dongke
     fi
     
+}
+
+function create_physical_volume {
+    while true; do
+        read -p "Vui lòng nhập partition vừa tạo vào để tạo physical_volume : " partition_name
+        if [ ${#partition_name} -lt 4 ]; then
+            checkCharaterPhysicalVolume $partition_name
+        else
+            # Kiểm tra xem có ổ đĩa đó không
+            if ls /dev | grep -q $partition_name && [ -n "$partition_name" ]; then
+                # Cần kiểm tra partition đã tạo volume hay chưa
+                mapfile -t pv_names < <(pvdisplay /dev/$partition_name | awk '/PV Name/ {print $3}')
+                for pv_name in "${pv_names[@]}"; do
+                    if [ "/dev/$pv_name" == "/dev/$partition_name" ]; then
+                        partition_check=true
+                    else
+                        partition_check=false
+                    fi
+                done
+                
+                if [ "$partition_check" == true ]; then
+                    echo "Partition $partition_name chưa tạo physical volume"
+                    break
+                else
+                    echo "Physical Volume đã được tạo:" $pv_names
+                    # Chuyển tiếp quá trình tạo volume group
+                fi
+                
+            else
+                echo "không có partition nào tên $partition_name"
+            fi
+            
+            
+        fi
+    done
 }
 
 function create_volume_group() {
@@ -156,14 +207,12 @@ function create_volume_group() {
     done
 }
 
-
-
 # Tạo Logical Volume LV
 function create_logical_volume {
     echo_space
     while true; do
         read -p "Nhập tên logical volume muốn tạo : " nameOfLogicalVolume
-        
+        # Kiểm tra điều kiện tạo logical volume
         lvAndvg="${nameOfVolumeGroup}-${nameOfLogicalVolume}"
         echo  $lvAndvg
         if ls /dev/mapper | grep -q $lvAndvg ; then
@@ -181,15 +230,7 @@ function create_logical_volume {
     done
 }
 
-# ---------------------------------- Điều kiện -------------------------------------
-# Điều kiện check ký tự
-function checkCharater {
-    echo "[WARNING] Nhập sai tên ổ cứng hoặc ổ cứng không có, hoặc sai định dạng ổ cứng $1"
-}
-# Điều kiện chỉ được nhập số
-function is_number() {
-    [[ $1 =~ ^[0-9]+$ ]]
-}
+# ---------------------------------- CHECK -------------------------------------
 
 # Check điều kiện tạo ổ cứng và tạo ổ cứng
 function conditionCreateDisk {
@@ -239,6 +280,8 @@ function conditionCreateDisk {
                     lsblk
                     echo "----------- DONE -----------  "
                     echo_dongke
+                    # Nhập thông tin để tạo physical volume
+                    create_physical_volume
                     create_volume_group
                     echo_dongke
                     create_logical_volume
