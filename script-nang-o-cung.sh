@@ -52,7 +52,7 @@ function is_number() {
 }
 
 
-# ---------------------------------- Tạo Các thứ -------------------------------------
+# ---------------------------------- TẠO CÁC THÀNH PHẦN -------------------------------------
 
 # Tạo Partition trong fdisk
 function create_partition_disk() {
@@ -104,7 +104,7 @@ EOF
     fi
     
 }
-
+# Tạo PHYSICAL Volume LV
 function create_physical_volume {
     while true; do
         read -p "Vui lòng nhập partition vừa tạo vào để tạo physical_volume : " partition_name
@@ -127,8 +127,10 @@ function create_physical_volume {
                     echo "Partition $partition_name chưa tạo physical volume"
                     break
                 else
-                    echo "Physical Volume đã được tạo:" $pv_names
                     # Chuyển tiếp quá trình tạo volume group
+                    pvcreate /dev/$partition_name
+                    echo "Physical Volume đã được tạo:" $partition_name
+                    break
                 fi
                 
             else
@@ -140,6 +142,7 @@ function create_physical_volume {
     done
 }
 
+# Tạo VOLUME Volume LV
 function create_volume_group() {
     echo_space
     
@@ -207,7 +210,7 @@ function create_volume_group() {
     done
 }
 
-# Tạo Logical Volume LV
+# Tạo LOGICAL Volume LV
 function create_logical_volume {
     echo_space
     while true; do
@@ -220,6 +223,23 @@ function create_logical_volume {
             echo "Đã có logical volume này rồi, vui lòng nhập lại tên khác !"
             echo_dongke
         else
+            
+            while true; do
+                read -p "Người anh em muốn cấp cho logical volume bao nhiêu Phần trăm dung lượng nào? :" capacity_lv
+                if [[ "$capacity_lv" =~ ^[0-9]+$ ]] && [ -n "$capacity_lv" ] && [ ${#capacity_lv} -lt 4 ]; then
+                    if  [ "$capacity_lv" -le 100 ] ; then
+                        echo "Chuẩn rồi"
+                        echo $nameOfVolumeGroup
+                        lvcreate -l $capacity_lv%FREE $nameOfVolumeGroup --name $nameOfLogicalVolume
+                        break 2
+                    else
+                        echo "vui lòng nhập nhỏ hơn hoặc bằng 100 rồi"
+                    fi
+                else
+                    echo "Vui lòng nhập số !"
+                    
+                fi
+            done
             echo_dongke
             echo_space
             echo "......Đang trong quá trình tạo Logical Volume......"
@@ -229,6 +249,13 @@ function create_logical_volume {
         fi
     done
 }
+
+# Tạo Định dạng file cho systems
+
+
+# Tạo MOUNT FOLDER 
+
+
 
 # ---------------------------------- CHECK -------------------------------------
 
