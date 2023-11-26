@@ -285,8 +285,11 @@ function create_logical_volume {
     
 }
 
-# Tạo MOUNT FOLDER
-
+# Add Phân Vùng đã có
+function addCapacity {
+    echo "Sau khi đã tạo partition xong, Khởi tạo chương trình nâng cấp dung lượng"
+    break 2
+}
 
 
 # ---------------------------------- CHECK -------------------------------------
@@ -326,10 +329,13 @@ function conditionCreateDisk {
                     echo "----------- DONE -----------  "
                     echo_dongke
                     if [ "$choice_option" = 2 ]; then
-                        echo " Khởi tạo chương trình nâng cấp dung lượng"
-                        break 2
+                        # Sau khi đã tạo partition xong, Khởi tạo chương trình nâng cấp dung lượng
+                        # echo "Sau khi đã tạo partition xong, Khởi tạo chương trình nâng cấp dung lượng"
+                        create_physical_volume
+                        addCapacity
                     else
-                        echo " Khởi tạo partition + VG + LV mới + Mount"
+                        # Khởi tạo partition + VG + LV mới + Mount
+                        # echo " Khởi tạo partition + VG + LV mới + Mount"
                         create_volume_group
                         echo_dongke
                         create_logical_volume
@@ -347,10 +353,13 @@ function conditionCreateDisk {
                     echo_dongke
                     # Nhập thông tin để tạo physical volume
                     if [ "$choice_option" = 2 ]; then
-                        echo " Khởi tạo chương trình nâng cấp dung lượng"
-                        break 2
+                        # Sau khi đã tạo partition xong, Khởi tạo chương trình nâng cấp dung lượng
+                        # echo "Sau khi đã tạo partition xong, Khởi tạo chương trình nâng cấp dung lượng"
+                        create_physical_volume
+                        addCapacity
                     else
-                        echo " Khởi tạo partition + VG + LV mới + Mount"
+                        # Khởi tạo partition + VG + LV mới + Mount
+                        # echo " Khởi tạo partition + VG + LV mới + Mount"
                         create_physical_volume
                         create_volume_group
                         echo_dongke
