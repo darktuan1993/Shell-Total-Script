@@ -212,32 +212,64 @@ function create_volume_group() {
 
 # Tạo LOGICAL Volume LV
 function create_logical_volume {
-    echo_space
+    #!/bin/bash
+    
     while true; do
-        read -p "Nhập tên logical volume muốn tạo : " nameOfLogicalVolume
-        # Kiểm tra điều kiện tạo logical volume
+        read -p "Nhập tên logical volume muốn tạo: " nameOfLogicalVolume
         lvAndvg="${nameOfVolumeGroup}-${nameOfLogicalVolume}"
-        echo  $lvAndvg
-        if ls /dev/mapper | grep -q $lvAndvg ; then
+        
+        if ls /dev/mapper | grep -q $lvAndvg; then
             echo_dongke
-            echo "Đã có logical volume này rồi, vui lòng nhập lại tên khác !"
+            echo "Logical volume '$lvAndvg' đã tồn tại. Vui lòng nhập tên khác!"
             echo_dongke
         else
-            
             while true; do
                 read -p "Người anh em muốn cấp cho logical volume bao nhiêu Phần trăm dung lượng nào? :" capacity_lv
                 if [[ "$capacity_lv" =~ ^[0-9]+$ ]] && [ -n "$capacity_lv" ] && [ ${#capacity_lv} -lt 4 ]; then
-                    if  [ "$capacity_lv" -le 100 ] ; then
-                        echo "Chuẩn rồi"
+                    if [ "$capacity_lv" -le 100 ]; then
+                        echo "Dung lượng cấp phát: $capacity_lv%"
                         echo $nameOfVolumeGroup
                         lvcreate -l $capacity_lv%FREE $nameOfVolumeGroup --name $nameOfLogicalVolume
-                        break 2
+                        
+                        while true; do
+                            read -p "Lựa chọn kiểu định dạng filesystems cho $nameOfVolumeGroup-$nameOfLogicalVolume (ext4 hay xfs): " file_systems
+                            file_system_name=$(echo "$file_systems" | tr '[:upper:]' '[:lower:]')
+                            
+                            case $file_system_name in
+                                ext4)
+                                    echo "Đã chọn kiểu định dạng: $file_system_name"
+                                    mkfs.ext4 /dev/$nameOfVolumeGroup/$nameOfLogicalVolume
+                                    echo "Logical volume đã được tạo và định dạng thành công $file_system_name."
+                                    echo_space
+                                    echo "Để mount thư mục vào bạn sử dụng lệnh sau nhé"
+                                    echo_space
+                                    echo_dongke_dai
+                                    echo "mount /dev/$nameOfVolumeGroup/$nameOfLogicalVolume /path/<thư mục cần mount>"
+                                    echo_dongke_dai
+                                    break 3
+                                ;;
+                                xfs)
+                                    echo "Đã chọn kiểu định dạng: $file_system_name"
+                                    mkfs.xfs /dev/$nameOfVolumeGroup/$nameOfLogicalVolume
+                                    echo "Logical volume đã được tạo và định dạng thành công $file_system_name."
+                                    echo_space
+                                    echo "Để mount thư mục vào bạn sử dụng lệnh sau nhé"
+                                    echo_space
+                                    echo_dongke_dai
+                                    echo "mount /dev/$nameOfVolumeGroup/$nameOfLogicalVolume /path/<thư mục cần mount>"
+                                    echo_dongke_dai
+                                    break 3
+                                ;;
+                                *)
+                                    echo "Lựa chọn không hợp lệ. Vui lòng chọn lại."
+                                ;;
+                            esac
+                        done
                     else
-                        echo "vui lòng nhập nhỏ hơn hoặc bằng 100 rồi"
+                        echo "Vui lòng nhập số nhỏ hơn hoặc bằng 100."
                     fi
                 else
-                    echo "Vui lòng nhập số !"
-                    
+                    echo "Vui lòng nhập số!"
                 fi
             done
             echo_dongke
@@ -248,12 +280,10 @@ function create_logical_volume {
             break
         fi
     done
+    
 }
 
-# Tạo Định dạng file cho systems
-
-
-# Tạo MOUNT FOLDER 
+# Tạo MOUNT FOLDER
 
 
 
@@ -296,6 +326,7 @@ function conditionCreateDisk {
                     create_volume_group
                     echo_dongke
                     create_logical_volume
+                    
                     exit_va_clear
                 else
                     # Nếu không nhập gì $partitionNumber là rỗng, Mặc định sẽ theo thứ tự là sdb1 sdb2 sdb3
@@ -312,6 +343,7 @@ function conditionCreateDisk {
                     create_volume_group
                     echo_dongke
                     create_logical_volume
+                    
                     exit_va_clear
                 fi
                 
