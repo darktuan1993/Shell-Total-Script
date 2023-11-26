@@ -1,5 +1,5 @@
 ﻿# ---------------------------------- VARIABLE & EFFECT ----------------------------------
-arrayMenu=("Tạo phân disk mới và mount" "Nâng cấp dung lượng" "Thoát")
+arrayMenu=("Khởi tạo partition + VG + LV mới + Mount" "Khởi tạo chương trình nâng cấp dung lượng" "Thoát")
 mapfile -t vg_names < <(vgdisplay | awk '/VG Name/ {print $3}')
 capacityNumber=""
 
@@ -326,7 +326,6 @@ function conditionCreateDisk {
                     create_volume_group
                     echo_dongke
                     create_logical_volume
-                    
                     exit_va_clear
                 else
                     # Nếu không nhập gì $partitionNumber là rỗng, Mặc định sẽ theo thứ tự là sdb1 sdb2 sdb3
@@ -342,8 +341,7 @@ function conditionCreateDisk {
                     create_physical_volume
                     create_volume_group
                     echo_dongke
-                    create_logical_volume
-                    
+                    create_logical_volume  
                     exit_va_clear
                 fi
                 
