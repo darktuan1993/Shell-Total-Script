@@ -288,7 +288,6 @@ function create_logical_volume {
 # Add Phân Vùng đã có
 function addCapacity {
     echo "Sau khi đã tạo partition xong, Khởi tạo chương trình nâng cấp dung lượng"
-    break 2
 }
 
 
@@ -333,6 +332,7 @@ function conditionCreateDisk {
                         # echo "Sau khi đã tạo partition xong, Khởi tạo chương trình nâng cấp dung lượng"
                         create_physical_volume
                         addCapacity
+                        break 3
                     else
                         # Khởi tạo partition + VG + LV mới + Mount
                         # echo " Khởi tạo partition + VG + LV mới + Mount"
@@ -357,6 +357,7 @@ function conditionCreateDisk {
                         # echo "Sau khi đã tạo partition xong, Khởi tạo chương trình nâng cấp dung lượng"
                         create_physical_volume
                         addCapacity
+                        break 3
                     else
                         # Khởi tạo partition + VG + LV mới + Mount
                         # echo " Khởi tạo partition + VG + LV mới + Mount"
