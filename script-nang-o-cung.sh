@@ -325,10 +325,16 @@ function conditionCreateDisk {
                     lsblk
                     echo "----------- DONE -----------  "
                     echo_dongke
-                    create_volume_group
-                    echo_dongke
-                    create_logical_volume
-                    exit_va_clear
+                    if [ "$choice_option" = 2 ]; then
+                        echo " Khởi tạo chương trình nâng cấp dung lượng"
+                        break 2
+                    else
+                        echo " Khởi tạo partition + VG + LV mới + Mount"
+                        create_volume_group
+                        echo_dongke
+                        create_logical_volume
+                        exit_va_clear
+                    fi
                 else
                     # Nếu không nhập gì $partitionNumber là rỗng, Mặc định sẽ theo thứ tự là sdb1 sdb2 sdb3
                     create_partition_disk $nameOFdisk $capacityNumber $partitionNumber
@@ -340,11 +346,17 @@ function conditionCreateDisk {
                     echo "----------- DONE -----------  "
                     echo_dongke
                     # Nhập thông tin để tạo physical volume
-                    create_physical_volume
-                    create_volume_group
-                    echo_dongke
-                    create_logical_volume
-                    exit_va_clear
+                    if [ "$choice_option" = 2 ]; then
+                        echo " Khởi tạo chương trình nâng cấp dung lượng"
+                        break 2
+                    else
+                        echo " Khởi tạo partition + VG + LV mới + Mount"
+                        create_physical_volume
+                        create_volume_group
+                        echo_dongke
+                        create_logical_volume
+                        exit_va_clear
+                    fi
                 fi
                 
             fi
@@ -353,6 +365,8 @@ function conditionCreateDisk {
         fi
     done
 }
+
+
 
 # Đồng ý tạo ổ cứng
 function accept_create() {
@@ -454,8 +468,8 @@ echo "----                                                                      
 echo "---------------------------------------------------------------------------------"
 echo "---------------------------------------------------------------------------------"
 echo_space
-read -p "Vui lòng chọn option [1-${#arrayMenu[@]}] : " choice
-case $choice in
+read -p "Vui lòng chọn option [1-${#arrayMenu[@]}] : " choice_option
+case $choice_option in
     1)
         read -p " Đại hiệp chắc chắn muốn tiến hành tạo mới? (y/n) : " choice
         case $choice in
@@ -475,7 +489,7 @@ case $choice in
         case $choice in
             [yY])
                 lay_thong_tin_disk
-                echo "ok"
+                tao_sdxY
             ;;
             *)
                 echo "Tạm biệt Đại hiệp"
@@ -483,7 +497,7 @@ case $choice in
         esac
     ;;
     3)
-         echo "Chức năng đang trong giai đoạn phát triển"
+        echo "Chức năng đang trong giai đoạn phát triển"
     ;;
     *)
         exit_va_clear
