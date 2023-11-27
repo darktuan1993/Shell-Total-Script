@@ -81,6 +81,7 @@ function create_partition_disk() {
         8e
         w
 EOF
+        partprobe
         echo "HỆ THỐNG TỰ ĐỘNG TẠO PHYSICAL VOLUME THEO THÔNG SỐ ĐÃ KHAI BÁO"
         pvcreate /dev/$nameDisk$partitionNumber
         echo "TẠO PARTITION $nameDisk$partitionNumber THÀNH CÔNG"
@@ -100,6 +101,7 @@ EOF
         8e
         w
 EOF
+        partprobe
         echo_dongke
         echo "TẠO PARTITION THÀNH CÔNG"
         echo_dongke
@@ -196,7 +198,7 @@ function create_volume_group() {
                             else
                                 echo_space
                                 echo_dongke
-                                echo "[ERROR] không có ổ $diskPartition, hoặc ổ này đã đc tạo volume group rồi, hoặc không đúng định dạng"
+                                echo "#date[ERROR] không có ổ $diskPartition, hoặc ổ này đã đc tạo volume group rồi, hoặc không đúng định dạng"
                                 echo_dongke
                                 echo_space
                             fi
@@ -285,11 +287,79 @@ function create_logical_volume {
     
 }
 
-# Add Phân Vùng đã có
-function addCapacity {
-    echo "Sau khi đã tạo partition xong, Khởi tạo chương trình nâng cấp dung lượng"
+# Extend Volume Group
+function extendVolumeGroup {
+    echo "Sau khi đã tạo partition xong, Khởi tạo chương trình nâng cấp dung lượng cho volume group"
+    while true; do
+        # Nhập tên volume group
+        read -p "Hãy nhập tên của vg-group cần extend dung lượng vào đây : " vg_group_name
+        # Điều kiện nhập phải khác rỗng
+        if [ ${#vg_group_name} = 0 ]; then
+            echo "Bạn cần phải nhập tên volume group"
+        else
+            # echo "Truyền tham số xuống $2 , độ dài là  ${#2} "
+            # Nhập rồi phải kiểm tra xem có thông tin của vg-group hay không
+            if ls /dev | grep -q $vg_group_name; then
+                echo "Có thông tin"
+                
+                # Nếu nhấn enter thì mặc định sẽ extend có thông số number không có thì phải nhập
+                if [ ${#2} -eq 0 ]; then
+                    # echo "Trường hợp nhấn enter disk khi tạo"
+                    echo "$partition_name "
+                    vgextend $vg_group_name /dev/$partition_name
+                    pvscan
+                    break
+                else
+                    # Extend Volume Group
+                    vgextend $vg_group_name /dev/$nameOFdisk$partitionNumber
+                    pvscan
+                    break
+                fi
+            else
+                echo "Không có thông tin của Volume Group"
+            fi
+        fi
+    done
 }
 
+# Extend Logical Volume
+function extendLogicalVolume {
+    echo "Nâng cấp dữ liệu cho logical volume"
+    while true; do
+        # Nhập tên logical volume
+        read -p "Hãy nhập tên của Logical Volume cần extend dung lượng vào đây : " logical_volume_name
+        if [ ${#logical_volume_name} = 0 ]; then
+            echo "Bạn cần phải nhập tên logical volume"
+        else
+            # echo "Truyền tham số xuống $2 , độ dài là  ${#2} "
+            # echo "Truyền tham số xuống $2 "
+            
+            # Nếu nhấn enter thì mặc định sẽ extend có thông số number không có thì phải nhập
+            if [ ${#2} -eq 0 ]; then
+                echo "Trường hợp nhấn enter disk khi tạo"
+                # read -p "Hãy nhập tên của partition để extend cho logical volume : " partition_name
+                echo "$partition_name "
+                lvextend /dev/$vg_group_name/$logical_volume_name /dev/$partition_name
+                
+                echo "Resize phân vùng thành công"
+                # resize2fs /dev/$vg_group_name/$logical_volume_nameF
+                break
+            else
+                
+                if ls /dev/$vg_group_name | grep -q $logical_volume_name; then
+                    echo "Có thông tin"
+                    lvextend /dev/$vg_group_name/$logical_volume_name /dev/$nameOFdisk$partitionNumber
+                    echo "Resize phân vùng công"
+                    # resize2fs /dev/$vg_group_name/$logical_volume_name
+                    
+                    break
+                else
+                    echo "Không có thông tin của "
+                fi
+            fi
+        fi
+    done
+}
 
 # ---------------------------------- CHECK -------------------------------------
 
@@ -331,7 +401,8 @@ function conditionCreateDisk {
                         # Sau khi đã tạo partition xong, Khởi tạo chương trình nâng cấp dung lượng
                         # echo "Sau khi đã tạo partition xong, Khởi tạo chương trình nâng cấp dung lượng"
                         create_physical_volume
-                        addCapacity
+                        extendVolumeGroup $nameOFdisk $partitionNumber
+                        extendLogicalVolume $nameOFdisk $partitionNumber
                         break 3
                     else
                         # Khởi tạo partition + VG + LV mới + Mount
@@ -356,7 +427,8 @@ function conditionCreateDisk {
                         # Sau khi đã tạo partition xong, Khởi tạo chương trình nâng cấp dung lượng
                         # echo "Sau khi đã tạo partition xong, Khởi tạo chương trình nâng cấp dung lượng"
                         create_physical_volume
-                        addCapacity
+                        extendVolumeGroup $nameOFdisk $partitionNumber
+                        extendLogicalVolume $nameOFdisk $partitionNumber
                         break 3
                     else
                         # Khởi tạo partition + VG + LV mới + Mount
