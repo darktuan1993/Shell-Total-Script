@@ -55,10 +55,10 @@ function lay_thong_tin_disk() {
 # ---------------------------------- Điều kiện Cơ bản -------------------------------------
 # Điều kiện check ký tự
 function checkCharater {
-    echo "[WARNING] Nhập sai điều kiện input, không có thông về dữ liệu $1"
+    echo "[WARNING] Nhập sai điều kiện input, không có thông về dữ liệu $1"  >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
 }
 function checkCharaterPhysicalVolume {
-    echo "[WARNING] Nhập sai điều kiện input, không có thông về volume group cuar partition $1"
+    echo "[WARNING] Nhập sai điều kiện input, không có thông về volume group cuar partition $1" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
 }
 # Điều kiện chỉ được nhập số
 function is_number() {
@@ -96,7 +96,7 @@ EOF
         partprobe
         echo "HỆ THỐNG TỰ ĐỘNG TẠO PHYSICAL VOLUME THEO THÔNG SỐ ĐÃ KHAI BÁO"
         pvcreate /dev/$nameDisk$partitionNumber
-        echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS]TẠO PARTITION $nameDisk$partitionNumber THÀNH CÔNG"
+        echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS]-TẠO PARTITION $nameDisk$partitionNumber THÀNH CÔNG" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
     else
         # NHẤN ENTER LUÔN
         echo_dongke
@@ -115,7 +115,7 @@ EOF
 EOF
         partprobe
         echo_dongke
-        echo "TẠO PARTITION THÀNH CÔNG"
+        echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS]-TẠO PARTITION THÀNH CÔNG" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
         echo_dongke
     fi
     
@@ -334,6 +334,9 @@ function extendVolumeGroup {
     done
 }
 
+# Check filesystem ổ cứng
+
+
 # Extend Logical Volume
 function extendLogicalVolume {
     echo "Nâng cấp dữ liệu cho logical volume"
@@ -346,6 +349,15 @@ function extendLogicalVolume {
             # echo "Truyền tham số xuống $2 , độ dài là  ${#2} "
             # echo "Truyền tham số xuống $2 "
             
+            # Check kiểu filesystems của phân vùng
+            vg_name_fixed=$(echo "$vg_group_name" | sed 's/-/--/g')
+            lv_name_fixed=$(echo "$logical_volume_name" | sed 's/-/--/g')
+            
+            # Kiểm tra filesystems:
+            fileSystem_disk=$(df -hT /dev/mapper/$vg_name_fixed-$lv_name_fixed | awk 'NR>1 {print $2}')
+            
+            echo 'Kiểu file systems là:' $fileSystem_disk
+            
             # Nếu nhấn enter thì mặc định sẽ extend có thông số number không có thì phải nhập
             if [ ${#2} -eq 0 ]; then
                 echo "Trường hợp nhấn enter disk khi tạo"
@@ -353,8 +365,25 @@ function extendLogicalVolume {
                 echo "$partition_name "
                 lvextend /dev/$vg_group_name/$logical_volume_name /dev/$partition_name
                 
-                echo "Resize phân vùng thành công"
-                resize2fs /dev/$vg_group_name/$logical_volume_name ||
+                
+                case $fileSystem_disk in
+                    ext4)
+                        # Thực thi các lệnh cho hệ thống tập tin ext4
+                        echo "Thực thi Resize cho filesystem $fileSystem_disk thành công "
+                        resize2fs /dev/$vg_group_name/$logical_volume_name
+                        
+                    ;;
+                    
+                    xfs)
+                        # Thực thi các lệnh cho hệ thống tập tin xfs
+                        echo "Thực thi Resize cho filesystem $fileSystem_disk thành công "
+                        xfs_growfs /dev/$vg_group_name/$logical_volume_name
+                    ;;
+                    
+                    *)
+                        echo "Hệ thống tập tin không được hỗ trợ"
+                    ;;
+                esac
                 break
             else
                 
@@ -384,7 +413,7 @@ function conditionCreateDisk {
             if ls /dev | grep -q $nameOFdisk$partitionNumber && [ -n "$partitionNumber" ]; then
                 echo_space
                 echo_dongke_dai
-                echo "[ERROR]-Có ổ cứng này rồi người Bạn ơi"
+                echo "$(date +%Y/%m/%d-%H:%M)-[ERROR]-Có ổ cứng này rồi người Bạn ơi" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                 echo_dongke_dai
                 echo_space
             else
@@ -395,7 +424,7 @@ function conditionCreateDisk {
                     if is_number "$capacityNumber"; then
                         break
                     else
-                        echo "Nhập số thôi người Bạn?"
+                        echo "$(date +%Y/%m/%d-%H:%M)-[ERROR]-Nhập số thôi người Bạn?" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                     fi
                 done
                 
@@ -455,7 +484,7 @@ function conditionCreateDisk {
                 
             fi
         else
-            echo "[WARNING] Nhập số thôi người Bạn"
+            echo "$(date +%Y/%m/%d-%H:%M)-[WARNING] vui lòng nhập số thôi người Bạn" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
         fi
     done
 }
@@ -495,7 +524,7 @@ function tao_sdxY() {
             # echo $array_length
             if [ "$array_length" = 0 ]; then
                 echo_dongke
-                echo "[INFO] Có thể tạo phân vùng trên ổ cứng này !"
+                echo "$(date +%Y/%m/%d-%H:%M)-[INFO] Có thể tạo phân vùng trên ổ cứng này !" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                 echo_dongke
                 accept_create
             else
@@ -538,7 +567,7 @@ function tao_sdxY() {
             
         else
             # Không tồn tại
-            echo "Không có ổ cứng nào là $nameOFdisk"
+            echo "$(date +%Y/%m/%d-%H:%M)-[ERROR]-Không có ổ cứng nào là $nameOFdisk"
         fi
     fi
     
@@ -590,7 +619,7 @@ case $choice_option in
         esac
     ;;
     3)
-       echo "$(date +%Y/%m/%d-%H:%M)-[ERROR] Chức năng đang trong giai đoạn phát triển" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
+        echo "$(date +%Y/%m/%d-%H:%M)-[ERROR] Chức năng đang trong giai đoạn phát triển" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
     ;;
     *)
         exit_va_clear
