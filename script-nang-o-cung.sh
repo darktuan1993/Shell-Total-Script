@@ -55,10 +55,12 @@ function lay_thong_tin_disk() {
 # ---------------------------------- Điều kiện Cơ bản -------------------------------------
 # Điều kiện check ký tự
 function checkCharater {
+    echo "[WARNING] Nhập sai điều kiện input, không có thông về dữ liệu $1"
     echo "[WARNING] Nhập sai điều kiện input, không có thông về dữ liệu $1"  >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
 }
 function checkCharaterPhysicalVolume {
     echo "[WARNING] Nhập sai điều kiện input, không có thông về volume group cuar partition $1" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
+    echo "[WARNING] Nhập sai điều kiện input, không có thông về volume group cuar partition $1"
 }
 # Điều kiện chỉ được nhập số
 function is_number() {
@@ -96,6 +98,7 @@ EOF
         partprobe
         echo "HỆ THỐNG TỰ ĐỘNG TẠO PHYSICAL VOLUME THEO THÔNG SỐ ĐÃ KHAI BÁO"
         pvcreate /dev/$nameDisk$partitionNumber
+        echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS]-TẠO PARTITION $nameDisk$partitionNumber THÀNH CÔNG"
         echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS]-TẠO PARTITION $nameDisk$partitionNumber THÀNH CÔNG" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
     else
         # NHẤN ENTER LUÔN
@@ -115,6 +118,7 @@ EOF
 EOF
         partprobe
         echo_dongke
+        echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS]-TẠO PARTITION THÀNH CÔNG"
         echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS]-TẠO PARTITION THÀNH CÔNG" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
         echo_dongke
     fi
@@ -140,7 +144,7 @@ function create_physical_volume {
                 done
                 
                 if [ "$partition_check" == true ]; then
-                    echo "$(date +%Y/%m/%d-%H:%M)-[INFO]-Partition $partition_name chưa tạo physical volume"
+                    echo "$(date +%Y/%m/%d-%H:%M)-[INFO]-Partition $partition_name chưa tạo physical volume"  >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                     break
                 else
                     # Chuyển tiếp quá trình tạo volume group
@@ -150,7 +154,7 @@ function create_physical_volume {
                 fi
                 
             else
-                echo "$(date +%Y/%m/%d-%H:%M)-[ERROR]-không có partition nào tên $partition_name"
+                echo "$(date +%Y/%m/%d-%H:%M)-[ERROR]-không có partition nào tên $partition_name"  >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
             fi
             
             
@@ -333,9 +337,6 @@ function extendVolumeGroup {
         fi
     done
 }
-
-# Check filesystem ổ cứng
-
 
 # Extend Logical Volume
 function extendLogicalVolume {
@@ -619,7 +620,8 @@ case $choice_option in
         esac
     ;;
     3)
-        echo "$(date +%Y/%m/%d-%H:%M)-[ERROR] Chức năng đang trong giai đoạn phát triển" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
+        cat /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
+        # echo "$(date +%Y/%m/%d-%H:%M)-[ERROR] Chức năng đang trong giai đoạn phát triển" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
     ;;
     *)
         exit_va_clear
