@@ -96,7 +96,7 @@ EOF
         partprobe
         echo "HỆ THỐNG TỰ ĐỘNG TẠO PHYSICAL VOLUME THEO THÔNG SỐ ĐÃ KHAI BÁO"
         pvcreate /dev/$nameDisk$partitionNumber
-        echo "date +%Y/%m/%d-%H:%M-[SUCCESS]TẠO PARTITION $nameDisk$partitionNumber THÀNH CÔNG"
+        echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS]TẠO PARTITION $nameDisk$partitionNumber THÀNH CÔNG"
     else
         # NHẤN ENTER LUÔN
         echo_dongke
@@ -140,7 +140,7 @@ function create_physical_volume {
                 done
                 
                 if [ "$partition_check" == true ]; then
-                    echo "date +%Y/%m/%d-%H:%M-[INFO]-Partition $partition_name chưa tạo physical volume"
+                    echo "$(date +%Y/%m/%d-%H:%M)-[INFO]-Partition $partition_name chưa tạo physical volume"
                     break
                 else
                     # Chuyển tiếp quá trình tạo volume group
@@ -150,7 +150,7 @@ function create_physical_volume {
                 fi
                 
             else
-                echo "date +%Y/%m/%d-%H:%M-[ERROR]-không có partition nào tên $partition_name"
+                echo "$(date +%Y/%m/%d-%H:%M)-[ERROR]-không có partition nào tên $partition_name"
             fi
             
             
@@ -173,10 +173,10 @@ function create_volume_group() {
         done
         
         if [ "$found" == true ]; then
-            echo "date +%Y/%m/%d-%H:%M-[WARNING] Tên $nameOfVolumeGroup đã được sử dụng rồi !"
+            echo "$(date +%Y/%m/%d-%H:%M)-[WARNING] Tên $nameOfVolumeGroup đã được sử dụng rồi !"
         else
             echo_space
-            echo "Tên '"$nameOfVolumeGroup"' có thể sử dụng"
+            echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS]-Tên '"$nameOfVolumeGroup"' có thể sử dụng" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
             echo_space
             read -p "Bạn có chắc muốn tạo volume group (VG) trên disk $nameOFdisk (y/n) : " choice
             echo_space
@@ -195,7 +195,7 @@ function create_volume_group() {
                                 vg_exist=$(pvdisplay /dev/$diskPartition | awk '/VG Name/ {print $3}')
                                 echo $vg_exist
                                 if [ -z "$vg_exist" ]; then
-                                    echo "date +%Y/%m/%d-%H:%M-[INFO] Partition này chưa tạo volume group tạo nhé"
+                                    echo "$(date +%Y/%m/%d-%H:%M)-[INFO] Partition này chưa tạo volume group tạo nhé"
                                     echo_dongke
                                     vgcreate $nameOfVolumeGroup /dev/$diskPartition
                                     echo_dongke
@@ -203,14 +203,14 @@ function create_volume_group() {
                                 else
                                     echo_space
                                     echo_dongke
-                                    echo "date +%Y/%m/%d-%H:%M-[WARNING] Partition $diskPartition này đã tạo volume group (VG) $vg_exist rồi vui lòng chọn disk khác nhé" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
+                                    echo "$(date +%Y/%m/%d-%H:%M)-[WARNING] Partition $diskPartition này đã tạo volume group (VG) $vg_exist rồi vui lòng chọn disk khác nhé" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                                     echo_dongke
                                     echo_space
                                 fi
                             else
                                 echo_space
                                 echo_dongke
-                                echo "date +%Y/%m/%d-%H:%M-[ERROR] không có ổ $diskPartition, hoặc ổ này đã đc tạo volume group rồi, hoặc không đúng định dạng" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
+                                echo "$(date +%Y/%m/%d-%H:%M)-[ERROR] không có ổ $diskPartition, hoặc ổ này đã đc tạo volume group rồi, hoặc không đúng định dạng" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                                 echo_dongke
                                 echo_space
                             fi
@@ -236,14 +236,14 @@ function create_logical_volume {
         
         if ls /dev/mapper | grep -q $lvAndvg; then
             echo_dongke
-            echo "date +%Y/%m/%d-%H:%M-[WARNING] Logical volume '$lvAndvg' đã tồn tại. Vui lòng nhập tên khác!"
+            echo "$(date +%Y/%m/%d-%H:%M)-[WARNING] Logical volume '$lvAndvg' đã tồn tại. Vui lòng nhập tên khác!" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
             echo_dongke
         else
             while true; do
                 read -p "Người Bạn muốn cấp cho logical volume bao nhiêu Phần trăm dung lượng nào? :" capacity_lv
                 if [[ "$capacity_lv" =~ ^[0-9]+$ ]] && [ -n "$capacity_lv" ] && [ ${#capacity_lv} -lt 4 ]; then
                     if [ "$capacity_lv" -le 100 ]; then
-                        echo "date +%Y/%m/%d-%H:%M-[INFO]-Dung lượng cấp phát: $capacity_lv%"
+                        echo "$(date +%Y/%m/%d-%H:%M)-[INFO]-Dung lượng cấp phát: $capacity_lv%" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                         echo $nameOfVolumeGroup
                         lvcreate -l $capacity_lv%FREE $nameOfVolumeGroup --name $nameOfLogicalVolume
                         
@@ -255,7 +255,7 @@ function create_logical_volume {
                                 ext4)
                                     echo "Đã chọn kiểu định dạng: $file_system_name"
                                     mkfs.ext4 /dev/$nameOfVolumeGroup/$nameOfLogicalVolume
-                                    echo "date +%Y/%m/%d-%H:%M-[SUCCESS] Logical volume đã được tạo và định dạng thành công $file_system_name."
+                                    echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS] Logical volume đã được tạo và định dạng thành công $file_system_name." >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                                     echo_space
                                     echo "Để mount thư mục vào Bạn sử dụng lệnh sau nhé"
                                     echo_space
@@ -267,7 +267,7 @@ function create_logical_volume {
                                 xfs)
                                     echo "Đã chọn kiểu định dạng: $file_system_name"
                                     mkfs.xfs /dev/$nameOfVolumeGroup/$nameOfLogicalVolume
-                                    echo "date +%Y/%m/%d-%H:%M-[SUCCESS] Logical volume đã được tạo và định dạng thành công $file_system_name."
+                                    echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS] Logical volume đã được tạo và định dạng thành công $file_system_name." >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                                     echo_space
                                     echo "Để mount thư mục vào Bạn sử dụng lệnh sau nhé"
                                     echo_space
@@ -506,12 +506,12 @@ function tao_sdxY() {
                     1)
                         if [ "$disk_space_sector_default" -gt 5000 ]; then
                             echo_dongke
-                            echo "[SUCCESS] Dung lượng vẫn còn Bạn có thể tạo ổ cứng"
+                            echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS]-Dung lượng vẫn còn Bạn có thể tạo ổ cứng"  >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                             echo_dongke
                             accept_create
                         else
                             echo_space
-                            echo "[ERROR] HẾT DUNG LƯỢNG Ổ CỨNG $nameOFdisk"
+                            echo "$(date +%Y/%m/%d-%H:%M)-[ERROR]-HẾT DUNG LƯỢNG Ổ CỨNG $nameOFdisk" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                             echo_space
                             exit
                         fi
@@ -521,13 +521,13 @@ function tao_sdxY() {
                         
                         if [ "$disk_space_sector" -gt 5000 ]; then
                             echo_dongke
-                            echo "[SUCCESS] Dung lượng vẫn còn Bạn có thể tạo ổ cứng"
+                            echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS] Dung lượng vẫn còn Bạn có thể tạo ổ cứng" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                             echo_dongke
                             accept_create
                             
                         else
                             echo_space
-                            echo "[ERROR] HẾT DUNG LƯỢNG Ổ CỨNG $nameOFdisk"
+                            echo "$(date +%Y/%m/%d-%H:%M)-[ERROR]- HẾT DUNG LƯỢNG Ổ CỨNG $nameOFdisk" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                             echo_space
                             exit
                         fi
@@ -555,7 +555,6 @@ echo "----                                 TOOL Ổ CỨNG                      
 echo "----                    For distribution Linux: Ubuntu/RHEL/CentOS           ----"
 echo "----                                  **ver0.1**                             ----"
 echo "----                                                                         ----"
-echo "----                            *create by Daz9_Tu4n*                        ----"
 echo "----                                                                         ----"
 list_menu
 echo "----                                                                         ----"
@@ -591,7 +590,7 @@ case $choice_option in
         esac
     ;;
     3)
-        echo "Chức năng đang trong giai đoạn phát triển" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
+       echo "$(date +%Y/%m/%d-%H:%M)-[ERROR] Chức năng đang trong giai đoạn phát triển" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
     ;;
     *)
         exit_va_clear
