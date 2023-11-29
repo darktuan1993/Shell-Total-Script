@@ -144,16 +144,19 @@ function create_physical_volume {
                 done
                 
                 if [ "$partition_check" == true ]; then
+                    echo "Partition $partition_name chưa tạo physical volume"
                     echo "$(date +%Y/%m/%d-%H:%M)-[INFO]-Partition $partition_name chưa tạo physical volume"  >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                     break
                 else
                     # Chuyển tiếp quá trình tạo volume group
                     pvcreate /dev/$partition_name
-                    echo "Physical Volume đã được tạo:" $partition_name
+                    echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS]-Physical Volume đã được tạo:" $partition_name
+                    echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS]-Physical Volume đã được tạo:" $partition_name >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                     break
                 fi
                 
             else
+                echo "không có partition nào tên $partition_name"
                 echo "$(date +%Y/%m/%d-%H:%M)-[ERROR]-không có partition nào tên $partition_name"  >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
             fi
             
@@ -240,13 +243,14 @@ function create_logical_volume {
         
         if ls /dev/mapper | grep -q $lvAndvg; then
             echo_dongke
-            echo "$(date +%Y/%m/%d-%H:%M)-[WARNING] Logical volume '$lvAndvg' đã tồn tại. Vui lòng nhập tên khác!" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
+            echo "$(date +%Y/%m/%d-%H:%M)-[WARNING]-Logical volume '$lvAndvg' đã tồn tại. Vui lòng nhập tên khác!" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
             echo_dongke
         else
             while true; do
                 read -p "Người Bạn muốn cấp cho logical volume bao nhiêu Phần trăm dung lượng nào? :" capacity_lv
                 if [[ "$capacity_lv" =~ ^[0-9]+$ ]] && [ -n "$capacity_lv" ] && [ ${#capacity_lv} -lt 4 ]; then
                     if [ "$capacity_lv" -le 100 ]; then
+                        echo "Dung lượng cấp phát: $capacity_lv%"
                         echo "$(date +%Y/%m/%d-%H:%M)-[INFO]-Dung lượng cấp phát: $capacity_lv%" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                         echo $nameOfVolumeGroup
                         lvcreate -l $capacity_lv%FREE $nameOfVolumeGroup --name $nameOfLogicalVolume
@@ -259,6 +263,7 @@ function create_logical_volume {
                                 ext4)
                                     echo "Đã chọn kiểu định dạng: $file_system_name"
                                     mkfs.ext4 /dev/$nameOfVolumeGroup/$nameOfLogicalVolume
+                                    echo " Logical volume đã được tạo và định dạng thành công $file_system_name."
                                     echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS] Logical volume đã được tạo và định dạng thành công $file_system_name." >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                                     echo_space
                                     echo "Để mount thư mục vào Bạn sử dụng lệnh sau nhé"
@@ -271,7 +276,8 @@ function create_logical_volume {
                                 xfs)
                                     echo "Đã chọn kiểu định dạng: $file_system_name"
                                     mkfs.xfs /dev/$nameOfVolumeGroup/$nameOfLogicalVolume
-                                    echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS] Logical volume đã được tạo và định dạng thành công $file_system_name." >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
+                                    echo "Logical volume đã được tạo và định dạng thành công $file_system_name."
+                                    echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS]-Logical volume đã được tạo và định dạng thành công $file_system_name." >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                                     echo_space
                                     echo "Để mount thư mục vào Bạn sử dụng lệnh sau nhé"
                                     echo_space
@@ -281,15 +287,15 @@ function create_logical_volume {
                                     break 3
                                 ;;
                                 *)
-                                    echo "Lựa chọn không hợp lệ. Vui lòng chọn lại."
+                                    echo "$(date +%Y/%m/%d-%H:%M)-[ERROR]-Lựa chọn không hợp lệ. Vui lòng chọn lại."
                                 ;;
                             esac
                         done
                     else
-                        echo "Vui lòng nhập số nhỏ hơn hoặc bằng 100."
+                        echo "$(date +%Y/%m/%d-%H:%M)-[WARNING]-Vui lòng nhập số nhỏ hơn hoặc bằng 100."
                     fi
                 else
-                    echo "Vui lòng nhập số!"
+                    echo "$(date +%Y/%m/%d-%H:%M)-[WARNING]-Vui lòng nhập số!"
                 fi
             done
             echo_dongke
@@ -332,7 +338,7 @@ function extendVolumeGroup {
                     break
                 fi
             else
-                echo "Không có thông tin của Volume Group"
+                echo "$(date +%Y/%m/%d-%H:%M)-[ERROR]-Không có thông tin của Volume Group" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
             fi
         fi
     done
@@ -346,6 +352,7 @@ function extendLogicalVolume {
         read -p "Hãy nhập tên của Logical Volume cần extend dung lượng vào đây : " logical_volume_name
         if [ ${#logical_volume_name} = 0 ]; then
             echo "Bạn cần phải nhập tên logical volume"
+            echo "$(date +%Y/%m/%d-%H:%M)-[ERROR]-Bạn cần phải nhập tên logical volume" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
         else
             # echo "Truyền tham số xuống $2 , độ dài là  ${#2} "
             # echo "Truyền tham số xuống $2 "
@@ -361,16 +368,17 @@ function extendLogicalVolume {
             
             # Nếu nhấn enter thì mặc định sẽ extend có thông số number không có thì phải nhập
             if [ ${#2} -eq 0 ]; then
-                echo "Trường hợp nhấn enter disk khi tạo"
+                echo "Nâng cấp dung lượng theo trạng thái mặc định"
+                echo "$(date +%Y/%m/%d-%H:%M)-[INFO]-Nâng cấp dung lượng theo trạng thái mặc định" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                 # read -p "Hãy nhập tên của partition để extend cho logical volume : " partition_name
-                echo "$partition_name "
+                # echo "$partition_name "
                 lvextend /dev/$vg_group_name/$logical_volume_name /dev/$partition_name
-                
                 
                 case $fileSystem_disk in
                     ext4)
                         # Thực thi các lệnh cho hệ thống tập tin ext4
                         echo "Thực thi Resize cho filesystem $fileSystem_disk thành công "
+                        echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS]-Thực thi Resize cho filesystem $fileSystem_disk thành công " >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                         resize2fs /dev/$vg_group_name/$logical_volume_name
                         
                     ;;
@@ -378,11 +386,13 @@ function extendLogicalVolume {
                     xfs)
                         # Thực thi các lệnh cho hệ thống tập tin xfs
                         echo "Thực thi Resize cho filesystem $fileSystem_disk thành công "
+                        echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS]-Thực thi Resize cho filesystem $fileSystem_disk thành công " >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                         xfs_growfs /dev/$vg_group_name/$logical_volume_name
                     ;;
                     
                     *)
                         echo "Hệ thống tập tin không được hỗ trợ"
+                        echo "$(date +%Y/%m/%d-%H:%M) - [ERROR]- Hệ thống tập tin không được hỗ trợ"  >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                     ;;
                 esac
                 break
@@ -391,12 +401,34 @@ function extendLogicalVolume {
                 if ls /dev/$vg_group_name | grep -q $logical_volume_name; then
                     echo "Có thông tin"
                     lvextend /dev/$vg_group_name/$logical_volume_name /dev/$nameOFdisk$partitionNumber
-                    echo "Resize phân vùng công"
-                    # resize2fs /dev/$vg_group_name/$logical_volume_name
+                    
+                    case $fileSystem_disk in
+                        ext4)
+                            # Thực thi các lệnh cho hệ thống tập tin ext4
+                            echo "Thực thi Resize cho filesystem $fileSystem_disk thành công "
+                            echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS]-Thực thi Resize cho filesystem $fileSystem_disk thành công " >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
+                            resize2fs /dev/$vg_group_name/$logical_volume_name
+                            
+                        ;;
+                        
+                        xfs)
+                            # Thực thi các lệnh cho hệ thống tập tin xfs
+                            echo "Thực thi Resize cho filesystem $fileSystem_disk thành công "
+                            echo "$(date +%Y/%m/%d-%H:%M)-[SUCCESS]-Thực thi Resize cho filesystem $fileSystem_disk thành công " >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
+                            xfs_growfs /dev/$vg_group_name/$logical_volume_name
+                        ;;
+                        
+                        *)
+                            echo "Hệ thống tập tin không được hỗ trợ"
+                            echo "$(date +%Y/%m/%d-%H:%M) - [ERROR]- Hệ thống tập tin không được hỗ trợ"  >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
+                        ;;
+                    esac
+                    
+                    
                     
                     break
                 else
-                    echo "Không có thông tin của "
+                    echo "$(date +%Y/%m/%d-%H:%M)-[ERROR]-Không có thông tin"  >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
                 fi
             fi
         fi
@@ -568,7 +600,7 @@ function tao_sdxY() {
             
         else
             # Không tồn tại
-            echo "$(date +%Y/%m/%d-%H:%M)-[ERROR]-Không có ổ cứng nào là $nameOFdisk"
+            echo "$(date +%Y/%m/%d-%H:%M)-[ERROR]-Không có ổ cứng nào là $nameOFdisk" >> /var/log/nangDisk/nang-disk-$(date +%Y%m%d).log
         fi
     fi
     
