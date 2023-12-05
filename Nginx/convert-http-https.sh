@@ -31,11 +31,11 @@ function add_line_config {
     if [ -n "$line_number_server_tokens" ]; then
         # Tăng số dòng lên 1 để xác định vị trí thêm cấu hình mới và Thêm cấu hình SSL vào vị trí ngay sau dòng server_tokens off;
         insert_line=$((line_number_server_tokens + 1))
-        echo "Add con fix vao truoc dong location / trong $1"
+        # echo "Add con fix vao truoc dong location / trong $1"
         awk -v line="$insert_line" -v config="$ssl_config" 'NR == line {print config} {print}' "$1" > "$1.tmp" && mv "$1.tmp" "$1"
     else
         # Giảm số dòng lên 1 để xác định vị trí thêm cấu hình mới và Thêm cấu hình SSL vào vị trí ngay sau dòng location /;
-        echo "Add con fix vao duoi dong location / trong $1"
+        # echo "Add con fix vao duoi dong location / trong $1"
         insert_line=$((line_number_location - 1))
         awk -v line="$insert_line" -v config="$ssl_config" 'NR == line {print config} {print}' "$1" > "$1.tmp" && mv "$1.tmp" "$1"
     fi
@@ -65,13 +65,17 @@ function update_config {
         filename="${filename%.conf}"  # Bỏ phần đuôi .conf
         listen_directive=$(awk '/^server\s*{/,/^}/ {if ($1 == "listen") print $2}' "$file")
         if grep -q "ssl_certificate" $file; then
-            echo "$filename Đã cấu hình SSL"
+            echo "$filename - CHECK SSLCONFIG => DA CONFIG TU TRC"
         else
-            echo "CHUA CAU HINH $filename"
+            echo "CONFIG SLL NGINX $filename"
             sed -i "s/$listen_directive/443 ssl/g" "$file"
             add_line_config $file
+
         fi
     done
+    echo "----------------------------------"
+    echo "GENERATE CONFIG SSL COMPLETE !!!!"
+    echo "----------------------------------"
 }
 update_config
 
