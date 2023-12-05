@@ -76,6 +76,7 @@ function update_config {
     echo "----------------------------------"
     echo "GENERATE CONFIG SSL COMPLETE !!!!"
     echo "----------------------------------"
+    nginx -t
 }
 update_config
 
