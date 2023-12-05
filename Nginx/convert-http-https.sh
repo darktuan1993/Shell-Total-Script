@@ -64,11 +64,13 @@ function update_config {
         filename="${file##*/}"  # Bỏ phần đường dẫn
         filename="${filename%.conf}"  # Bỏ phần đuôi .conf
         listen_directive=$(awk '/^server\s*{/,/^}/ {if ($1 == "listen") print $2}' "$file")
+        port_directive=$(awk '/^server\s*{/,/^}/ {if ($1 == "listen") print $1}' "$file")
         if grep -q "ssl_certificate" $file; then
             echo "$filename - CHECK SSLCONFIG => DA CONFIG TU TRC"
         else
             echo "CONFIG SLL NGINX $filename"
-            sed -i "s/$listen_directive/443 ssl/g" "$file"
+            #echo "$port_directive $listen_directive"
+            sed -i "s/${port_directive} ${listen_directive}/${port_directive} 443 ssl;/g" "$file"
             add_line_config $file
 
         fi
