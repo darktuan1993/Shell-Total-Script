@@ -11,9 +11,9 @@
 # Variable
 ssl_config="
 
-    ssl_certificate /etc/nginx/cert_vnpay_local/vnpay.local.pem;
-    ssl_certificate_key /etc/nginx/cert_vnpay_local/vnpay.local.key;
-    ssl_dhparam /etc/nginx/cert_vnpay_local/dhparam.pem;
+ssl_certificate /etc/nginx/cert_vnpay_local/vnpay.local.pem;
+ssl_certificate_key /etc/nginx/cert_vnpay_local/vnpay.local.key;
+ssl_dhparam /etc/nginx/cert_vnpay_local/dhparam.pem;
 
 "
     host_var="\$host"
@@ -58,9 +58,10 @@ server {
 
     # Update config
 function update_config {
+    read -p "nhập chữ cái đầu config : " choice_option
+    echo $choice_option
 
-    for file in /etc/nginx/vhosts/*.conf
-    do
+    function change_from_path_config {
         filename="${file##*/}"  # Bỏ phần đường dẫn
         filename="${filename%.conf}"  # Bỏ phần đuôi .conf
         listen_directive=$(awk '/^server\s*{/,/^}/ {if ($1 == "listen") print $2}' "$file")
@@ -76,7 +77,39 @@ function update_config {
             add_line_config $file
 
         fi
-    done
+    }
+
+    if [ -z "$choice_option" ]; then
+        path_total=/etc/nginx/vhosts/*.conf
+        for file in $path_total; do
+            change_from_path_config
+        done
+    else
+        path_total=/etc/nginx/vhosts/$choice_option*.conf
+        for file in $path_total; do
+            change_from_path_config
+        done
+    fi
+
+    # for file in /etc/nginx/vhosts/*.conf
+    # do
+    #     filename="${file##*/}"  # Bỏ phần đường dẫn
+    #     filename="${filename%.conf}"  # Bỏ phần đuôi .conf
+    #     listen_directive=$(awk '/^server\s*{/,/^}/ {if ($1 == "listen") print $2}' "$file")
+    #     # port_directive=$(awk '/^server\s*{/,/^}/ {if ($1 == "listen") print $1}' "$file")
+    #     if grep -q "ssl_certificate" $file; then
+    #         echo "$filename - CHECK SSLCONFIG => DA CONFIG TU TRC"
+    #     else
+    #         echo "CONFIG SLL NGINX $filename"
+    #         #echo "$port_directive $listen_directive"
+    #         # sed -i "s/${port_directive} ${listen_directive}/${port_directive} 443 ssl;/g" "$file"
+    #         sed -i "0,/$listen_directive/{s/$listen_directive/443 ssl;/}" "$file"
+
+    #         add_line_config $file
+
+    #     fi
+    # done
+    
     echo "----------------------------------"
     echo "GENERATE CONFIG SSL COMPLETE !!!!"
     echo "----------------------------------"
