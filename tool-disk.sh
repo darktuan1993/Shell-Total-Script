@@ -11,7 +11,7 @@ fi
 
 
 # ---------------------------------- VARIABLE & EFFECT ----------------------------------
-arrayMenu=("Create new partition + new VG + new LV + Mount folder" "Create programs upgrade capacity Partition" "View log manage disk" "SWAP" "Exit")
+arrayMenu=("Tao moi partition + volumn group + logical volume + Mount folder" "Nang dung luong o cung LVM" "View log manage disk" "SWAP" "Exit")
 arrayMenuSwap=("Su dung swapfile" "Add Phan vung cho swap" "Exit")
 mapfile -t vg_names < <(vgdisplay | awk '/VG Name/ {print $3}')
 capacityNumber=""
@@ -665,9 +665,9 @@ echo "--------------------------------------------------------------------------
 echo "---------------------------------------------------------------------------------"
 echo "----                                                                         ----"
 echo "----                                                                         ----"
-echo "----                                 TOOL Ổ CỨNG                              ----"
+echo "----                                  TOOL Ổ CỨNG                            ----"
 echo "----                    For distribution Linux: Ubuntu/RHEL/CentOS           ----"
-echo "----                                  **ver0.1**                             ----"
+echo "----                                  **ver1.1**                             ----"
 echo "----                                                                         ----"
 echo "----                                                                         ----"
 list_menu
